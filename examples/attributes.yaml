@@ -1,0 +1,18 @@
+# Example attribute file for tabledig.
+# Run:  tabledig extract examples/sample_income_statement.pdf -a examples/attributes.yaml
+
+min_score: 80          # default minimum match score (0-100)
+top_k: 1               # best rows kept per attribute and file
+normalize_units: false # true -> convert "in thousands/lakhs/millions" to base units
+
+attributes:
+  - Total revenue                 # plain string = fuzzy match
+  - name: Revenue from operations
+    mode: exact                   # exact | contains | fuzzy
+  - name: Net profit
+    aliases: [Profit for the year, Profit after tax, PAT]
+  - name: Staff cost
+    aliases: [Employee benefits expense]
+  - Finance costs
+  - Tax expense
+  - Dividend paid                 # not in the document -> reported as not_found

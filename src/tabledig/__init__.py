@@ -1,0 +1,22 @@
+"""tabledig - pull named attributes out of table-style PDFs."""
+from .config import load_attributes, load_config
+from .extractor import Extractor, extract
+from .models import Attribute, Record, Table, Unit
+from .output import to_dataframe, write_records
+from .reader import read_tables
+
+__version__ = "0.1.0"
+
+__all__ = [
+    "Attribute",
+    "Extractor",
+    "Record",
+    "Table",
+    "Unit",
+    "extract",
+    "load_attributes",
+    "load_config",
+    "read_tables",
+    "to_dataframe",
+    "write_records",
+]

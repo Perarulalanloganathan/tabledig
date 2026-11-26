@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# local data: never commit real documents or extraction output
+/data/
+/output/
+/pdf_folder/
+/output_folder/
+*.exe
+.env

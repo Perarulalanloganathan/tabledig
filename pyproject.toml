@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tabledig"
+dynamic = ["version"]
+description = "Pull named attributes (row labels) and their values out of table-style PDFs: financial statements, invoices, reports."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Perarulalan L" }]
+keywords = ["pdf", "table-extraction", "data-extraction", "pdfplumber", "financial-statements"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Text Processing",
+  "Intended Audience :: Developers",
+]
+dependencies = [
+  "pdfplumber>=0.10",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+excel = ["pandas>=1.5", "openpyxl>=3.1"]
+dev = ["pytest>=7", "reportlab>=4", "ruff>=0.4"]
+
+[project.urls]
+Homepage = "https://github.com/Perarulalanloganathan/tabledig"
+Issues = "https://github.com/Perarulalanloganathan/tabledig/issues"
+Changelog = "https://github.com/Perarulalanloganathan/tabledig/blob/main/CHANGELOG.md"
+
+[project.scripts]
+tabledig = "tabledig.cli:main"
+
+[tool.hatch.version]
+path = "src/tabledig/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tabledig"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
