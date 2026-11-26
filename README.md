@@ -1,5 +1,6 @@
 # tabledig
 
+[![PyPI](https://img.shields.io/pypi/v/tabledig)](https://pypi.org/project/tabledig/)
 [![CI](https://github.com/Perarulalanloganathan/tabledig/actions/workflows/ci.yml/badge.svg)](https://github.com/Perarulalanloganathan/tabledig/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 [![Live demo](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://tabledig.streamlit.app)
@@ -63,9 +64,9 @@ streamlit run app/streamlit_app.py
 ## Install
 
 ```bash
-pip install git+https://github.com/Perarulalanloganathan/tabledig.git
+pip install tabledig
 # with .xlsx output and DataFrame support:
-pip install "tabledig[excel] @ git+https://github.com/Perarulalanloganathan/tabledig.git"
+pip install "tabledig[excel]"
 ```
 
 From source:

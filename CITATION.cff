@@ -4,6 +4,9 @@ title: "tabledig: find named attributes in table-style PDFs and say when to doub
 type: software
 license: MIT
 repository-code: "https://github.com/Perarulalanloganathan/tabledig"
+identifiers:
+  - type: url
+    value: "https://pypi.org/project/tabledig/"
 url: "https://perarulalanloganathan.github.io/tabledig/"
 authors:
   - alias: Perarulalanloganathan

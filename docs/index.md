@@ -5,7 +5,7 @@ It finds those rows and returns their values with the page, column, match score,
 (do the totals add up?) and a confidence, so you know which values to double-check.
 
 ```bash
-pip install "git+https://github.com/Perarulalanloganathan/tabledig.git"   # PyPI release planned for 1.0
+pip install tabledig
 tabledig extract report.pdf --attr "Revenue" --validate --evidence
 ```
 
