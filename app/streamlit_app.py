@@ -39,10 +39,11 @@ st.set_page_config(page_title="tabledig demo", page_icon="🔎", layout="wide")
 
 @st.cache_data(show_spinner="Reading tables from the PDF...")
 def load_tables(data: bytes):
-    with tempfile.NamedTemporaryFile(suffix=".pdf") as handle:
-        handle.write(data)
-        handle.flush()
-        return read_tables(handle.name)
+    # A temp *directory* (not NamedTemporaryFile): Windows cannot reopen a file that is still open.
+    with tempfile.TemporaryDirectory() as folder:
+        path = Path(folder) / "upload.pdf"
+        path.write_bytes(data)
+        return read_tables(path)
 
 
 def table_to_frame(table) -> pd.DataFrame:
