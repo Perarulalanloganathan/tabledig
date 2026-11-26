@@ -6,7 +6,7 @@ top_k: 1               # best rows kept per attribute and file
 normalize_units: false # true -> convert "in thousands/lakhs/millions" to base units
 
 attributes:
-  - Total revenue                 # plain string = fuzzy match
+  - Revenue                       # plain string = fuzzy match
   - name: Revenue from operations
     mode: exact                   # exact | contains | fuzzy
   - name: Net profit

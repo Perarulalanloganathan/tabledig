@@ -104,3 +104,27 @@ def test_missing_attribute_reports_not_found(tmp_path):
     story = _p("Narrative only mentions Dividend of 7.") + _bordered([["Item", "Amount"], ["Revenue", "10"]])
     recs = extract(_build(tmp_path / "miss.pdf", story), ["Dividend paid"])
     assert recs[0].status == "not_found"
+
+
+def test_duplicate_column_names_do_not_overwrite_each_other(tmp_path):
+    story = _bordered([["Item", "2024", "2024"], ["Sales", "10", "20"]])
+    recs = extract(_build(tmp_path / "dup.pdf", story), ["Sales"])
+    assert [(r.column, r.value) for r in recs] == [("2024", 10.0), ("2024 (2)", 20.0)]
+    from tabledig.output import records_to_wide
+
+    _, rows = records_to_wide(recs)
+    assert rows[0]["2024"] == 10.0 and rows[0]["2024 (2)"] == 20.0
+
+
+def test_encrypted_pdf_needs_password(tmp_path):
+    from reportlab.lib.pdfencrypt import StandardEncryption
+    from reportlab.pdfgen import canvas
+
+    path = tmp_path / "enc.pdf"
+    c = canvas.Canvas(str(path), encrypt=StandardEncryption("secret", canPrint=0))
+    c.drawString(72, 720, "Revenue   100   200")
+    c.save()
+    bad = extract(str(path), ["Revenue"])
+    assert bad[0].status == "error" and "password" in bad[0].note.lower()
+    ok = extract(str(path), ["Revenue"], password="secret")
+    assert ok[0].status != "error"

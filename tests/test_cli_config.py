@@ -1,5 +1,6 @@
 import csv
 import json
+from pathlib import Path
 
 import pytest
 
@@ -82,3 +83,16 @@ def test_cli_attr_alias_syntax(tmp_path, income_pdf):
     assert code == 0
     rows = list(csv.DictReader(out.open()))
     assert rows[0]["matched_label"] == "Profit for the year"
+
+
+def test_directory_scan_is_case_insensitive_and_recursive(tmp_path):
+    import shutil
+
+    from tabledig.cli import _collect_pdfs
+
+    src = next(Path(__file__).resolve().parent.parent.joinpath("examples").glob("sample_income*.pdf"))
+    (tmp_path / "sub").mkdir()
+    shutil.copy(src, tmp_path / "A.PDF")
+    shutil.copy(src, tmp_path / "sub" / "b.pdf")
+    (tmp_path / "notes.txt").write_text("x")
+    assert sorted(p.name for p in _collect_pdfs([str(tmp_path)])) == ["A.PDF", "b.pdf"]

@@ -18,7 +18,7 @@ def _collect_pdfs(paths: Sequence[str]) -> list[Path]:
     for raw in paths:
         p = Path(raw)
         if p.is_dir():
-            found.extend(sorted(p.rglob("*.pdf")))
+            found.extend(sorted(f for f in p.rglob("*") if f.is_file() and f.suffix.lower() == ".pdf"))
         elif p.is_file():
             found.append(p)
         else:
@@ -57,6 +57,7 @@ def _build_parser() -> argparse.ArgumentParser:
         default="auto",
         help="decimal mark: auto-detect (default), or force dot (1,234.5) / comma (1.234,5)",
     )
+    ex.add_argument("--password", default=None, help="password for encrypted PDFs")
     ex.add_argument("--no-missing", action="store_true", help="omit attributes that were not found")
     ex.add_argument("-j", "--workers", type=int, default=1, help="parallel processes for many PDFs")
 
@@ -64,6 +65,7 @@ def _build_parser() -> argparse.ArgumentParser:
     ins.add_argument("pdf")
     ins.add_argument("--page", type=int, help="only this page (1-based)")
     ins.add_argument("--rows", type=int, default=8, help="rows to preview per table")
+    ins.add_argument("--password", default=None, help="password for encrypted PDFs")
     return parser
 
 
@@ -86,6 +88,7 @@ def _cmd_extract(args: argparse.Namespace) -> int:
         top_k=args.top_k if args.top_k is not None else settings.get("top_k", 1),
         normalize_units=args.normalize_units or bool(settings.get("normalize_units", False)),
         include_missing=not args.no_missing,
+        password=args.password,
         decimal={"auto": None, "dot": ".", "comma": ","}[args.decimal],
     )
     pdfs = _collect_pdfs(args.paths)
@@ -106,7 +109,7 @@ def _cmd_extract(args: argparse.Namespace) -> int:
 
 
 def _cmd_inspect(args: argparse.Namespace) -> int:
-    tables = read_tables(args.pdf)
+    tables = read_tables(args.pdf, password=args.password)
     if args.page:
         tables = [t for t in tables if t.page == args.page]
     if not tables:

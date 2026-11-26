@@ -79,7 +79,7 @@ pip install -e ".[dev]"
 ### 1. See what is in the PDF
 
 ```bash
-tabledig inspect report.pdf
+tabledig inspect examples/sample_income_statement.pdf
 ```
 
 Prints each detected table (page, header, first rows, declared unit) so you can pick the
@@ -88,12 +88,15 @@ labels to ask for.
 ### 2. Extract
 
 ```bash
-tabledig extract report.pdf --attr "Total revenue" --attr "Net profit" -o result.csv
+tabledig extract examples/sample_income_statement.pdf --attr "Revenue" --attr "Net profit=Profit for the year|PAT" -o result.csv
 tabledig extract ./reports/ -a attributes.yaml -o result.xlsx --wide -j 4
 ```
 
 Output is **long format** by default (one row per attribute x column). `--wide` gives one row
 per attribute with a column per table column (e.g. one per year).
+
+Other useful flags: `--password` (encrypted PDFs), `--decimal comma` (force `1.234,56` style numbers),
+`--normalize-units` (turn "in thousands" into full values), `--top-k N`, `--min-score N`.
 
 Aliases can go inline: `--attr "Net profit=Profit for the year|PAT"`.
 
@@ -102,7 +105,7 @@ Aliases can go inline: `--attr "Net profit=Profit for the year|PAT"`.
 ```python
 from tabledig import extract, to_dataframe
 
-records = extract("report.pdf", ["Total revenue", {"name": "Net profit", "aliases": ["PAT"]}])
+records = extract("examples/sample_income_statement.pdf", ["Revenue", {"name": "Net profit", "aliases": ["Profit for the year", "PAT"]}])
 df = to_dataframe(records, wide=True)      # needs tabledig[excel]
 ```
 
@@ -116,7 +119,7 @@ top_k: 1                 # best-matching rows kept per attribute and file
 normalize_units: false   # true -> convert thousands/lakhs/millions to base units
 
 attributes:
-  - Total revenue                      # plain string = fuzzy match
+  - Revenue                            # plain string = fuzzy match
   - name: Revenue from operations
     mode: exact                        # exact | contains | fuzzy
   - name: Staff cost

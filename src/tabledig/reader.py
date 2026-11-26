@@ -138,6 +138,17 @@ def _build_text_tables(
     return tables
 
 
+def _unique_header(header: list[str]) -> list[str]:
+    """Make repeated column names unique ("2024", "2024 (2)") so no value is overwritten."""
+    seen: dict[str, int] = {}
+    out = []
+    for name in header:
+        n = seen.get(name, 0) + 1
+        seen[name] = n
+        out.append(name if n == 1 or not name else f"{name} ({n})")
+    return out
+
+
 def _good_rows(tables: list[Table]) -> int:
     """Rows that look like data: a text label followed by at least one number."""
     count = 0
@@ -155,7 +166,9 @@ def _width(table: Table) -> int:
     return max((len(r) for r in table.rows), default=0)
 
 
-def read_tables(path: Union[str, Path], *, text_fallback: bool = True) -> list[Table]:
+def read_tables(
+    path: Union[str, Path], *, text_fallback: bool = True, password: Optional[str] = None
+) -> list[Table]:
     """Return every table found in ``path`` (all pages).
 
     A ruled table with no header inherits the previous page's header when the column counts
@@ -166,7 +179,7 @@ def read_tables(path: Union[str, Path], *, text_fallback: bool = True) -> list[T
 
     tables: list[Table] = []
     previous: Optional[Table] = None
-    with pdfplumber.open(str(path)) as pdf:
+    with pdfplumber.open(str(path), password=password) as pdf:
         for page in pdf.pages:
             text = page.extract_text() or ""
             unit = detect_unit(text)
@@ -182,6 +195,8 @@ def read_tables(path: Union[str, Path], *, text_fallback: bool = True) -> list[T
 
             if text_fallback and _good_rows(built) < 2:
                 built.extend(_build_text_tables(text, page.page_number, len(tables) + len(built), unit))
+            for table in built:
+                table.header = _unique_header(table.header)
             tables.extend(built)
             ruled = [t for t in built if t.source == "ruled" and t.rows]
             if ruled:

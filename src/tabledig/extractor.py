@@ -43,6 +43,14 @@ def _split_row(row: list[str]) -> tuple[Optional[str], int]:
     return None, -1
 
 
+def _describe_error(exc: Exception) -> str:
+    text = str(exc).strip()
+    name = type(exc).__name__
+    if "password" in name.lower() or "password" in text.lower() or (name == "PdfminerException" and not text):
+        return f"{name}: PDF is password-protected or encrypted; pass password=... (CLI: --password)"
+    return f"{name}: {text}" if text else name
+
+
 class Extractor:
     """Find named attributes (row labels) and return their values.
 
@@ -60,6 +68,8 @@ class Extractor:
         so results are in base units.
     include_missing:
         Emit a ``not_found`` record for attributes with no match.
+    password:
+        Password for encrypted PDFs.
     decimal:
         ``"."`` or ``","`` to force the decimal mark (default: auto-detect, so ``1.234,56`` works).
     """
@@ -73,6 +83,7 @@ class Extractor:
         normalize_units: bool = False,
         include_missing: bool = True,
         decimal: Optional[str] = None,
+        password: Optional[str] = None,
         skip_columns: re.Pattern = DEFAULT_SKIP_COLUMNS,
     ) -> None:
         self.attributes = coerce_attributes(attributes)
@@ -81,11 +92,12 @@ class Extractor:
         self.normalize_units = normalize_units
         self.include_missing = include_missing
         self.decimal = decimal
+        self.password = password
         self.skip_columns = skip_columns
 
     # -- single file --------------------------------------------------------
     def extract_file(self, path: Union[str, Path]) -> list[Record]:
-        tables = read_tables(path)
+        tables = read_tables(path, password=self.password)
         return self.extract_tables(tables, Path(path).name)
 
     def extract_tables(self, tables: Iterable[Table], file_name: str = "") -> list[Record]:
@@ -178,7 +190,7 @@ class Extractor:
         try:
             return self.extract_file(path)
         except Exception as exc:  # one bad PDF must not stop a batch
-            return [Record(path.name, "*", "error", note=f"{type(exc).__name__}: {exc}")]
+            return [Record(path.name, "*", "error", note=_describe_error(exc))]
 
 
 def extract(
@@ -188,7 +200,7 @@ def extract(
     workers: int = 1,
     **options,
 ) -> list[Record]:
-    """One-call API: ``extract("report.pdf", ["Total revenue", "Net profit"])``."""
+    """One-call API: ``extract("report.pdf", ["Revenue", "Net profit"])``."""
     if isinstance(paths, (str, Path)):
         paths = [paths]
     return Extractor(attributes, **options).extract_many(paths, workers=workers)

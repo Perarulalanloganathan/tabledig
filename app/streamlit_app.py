@@ -97,7 +97,7 @@ else:
     upload = st.file_uploader("PDF with tables (text-based, not scanned)", type="pdf")
     if upload is not None:
         data, file_name = upload.getvalue(), upload.name
-    default_attrs = "Total revenue\nNet profit = Profit for the year | PAT"
+    default_attrs = "Revenue\nNet profit = Profit for the year | PAT"
 
 attr_text = st.text_area(
     "Attributes to extract (one per line)",
