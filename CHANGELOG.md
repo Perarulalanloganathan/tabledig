@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
+- International number formats (`1.234,56`, `1 234,56`, `1'234.50`) and `--decimal auto|dot|comma`.
+- Unicode-aware labels and matching (accents folded; Chinese, Cyrillic, Greek labels work).
+- Header carry-over for tables continuing on later pages without a header.
+- Stacked-cell tables split into rows; text-line fallback when ruled tables are nearly empty.
+- Tests on mixed prose + table documents from other domains.
 - Demo: result columns reordered so values appear first; README now has a demo GIF
   (`scripts/make_demo_gif.py` regenerates it from the real app).
 
