@@ -187,6 +187,15 @@ Source layout: `reader.py` (tables), `matcher.py` (scoring), `normalize.py` (num
 `extractor.py` (engine), `config.py` (attribute files), `output.py`, `cli.py`; `app/` holds the
 Streamlit demo and `benchmarks/` the benchmark.
 
+## Real-PDF evaluation
+
+`python benchmarks/real_eval.py` runs 17 hand-checked cases on public PDFs (downloaded at a pinned
+commit from the MIT-licensed [pdfplumber](https://github.com/jsvine/pdfplumber) test suite, not stored
+here): firearm background checks, California layoff notices, a Chinese balance sheet, a Chinese
+engineering standard, bank loan rates and figure-skating scores. Expected values were read off the printed
+pages. **Current result: 15/17 pass.** The two failures are kept in the score on purpose: a value printed
+*before* its label ("327 BALLOTS CAST") and a newspaper-style multi-column layout.
+
 ## Tested beyond finance
 
 The extractor is not tied to financial statements. Besides the synthetic benchmark, it was spot-checked

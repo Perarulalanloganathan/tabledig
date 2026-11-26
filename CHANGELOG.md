@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+- `benchmarks/real_eval.py`: 17 hand-checked cases on real public PDFs (15 pass; 2 documented limits), run in CI.
+- CI now also runs the test suite on Windows and macOS.
+
 ## 0.3.1
 - Fixed: repeated column names in one table (e.g. two "2024" columns) silently overwrote each other
   in wide output; they are now `2024` and `2024 (2)`.

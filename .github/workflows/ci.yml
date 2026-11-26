@@ -19,3 +19,27 @@ jobs:
       - run: pip install -e ".[dev,excel]"
       - run: ruff check .
       - run: pytest -q
+
+  cross-platform:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,excel]"
+      - run: pytest -q
+
+  real-pdf-eval:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: python benchmarks/real_eval.py
