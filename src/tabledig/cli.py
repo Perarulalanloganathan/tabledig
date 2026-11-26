@@ -52,6 +52,23 @@ def _build_parser() -> argparse.ArgumentParser:
     ex.add_argument("--top-k", type=int, help="best-matching rows to keep per attribute (default 1)")
     ex.add_argument("--normalize-units", action="store_true", help="convert lakhs/millions/... to base units")
     ex.add_argument(
+        "--pack",
+        action="append",
+        metavar="NAME",
+        help="synonym pack: finance, healthcare, sports, government, all, or a .yaml path (repeatable)",
+    )
+    ex.add_argument("--memory", metavar="FILE", help="YAML file of remembered aliases to load")
+    ex.add_argument(
+        "--suggest",
+        action="store_true",
+        help="for attributes not found, print near-miss row labels to try as aliases",
+    )
+    ex.add_argument(
+        "--remember",
+        action="store_true",
+        help="with --suggest and --memory: save the best suggestion per missing attribute to the memory file",
+    )
+    ex.add_argument(
         "--column",
         action="append",
         metavar="NAME",
@@ -112,6 +129,8 @@ def _cmd_extract(args: argparse.Namespace) -> int:
         evidence=args.evidence,
         explain=args.explain,
         columns=args.column,
+        packs=args.pack,
+        memory=args.memory,
         decimal={"auto": None, "dot": ".", "comma": ","}[args.decimal],
     )
     pdfs = _collect_pdfs(args.paths)
@@ -128,7 +147,23 @@ def _cmd_extract(args: argparse.Namespace) -> int:
     )
     for r in errors:
         print(f"  ! {r.file}: {r.note}", file=sys.stderr)
+    if args.suggest:
+        _print_suggestions(extractor, pdfs, args)
     return 1 if errors else 0
+
+
+def _print_suggestions(extractor: Extractor, pdfs: Sequence[Path], args: argparse.Namespace) -> None:
+    learned: dict[str, list[str]] = {}
+    for pdf in pdfs:
+        for name, hits in extractor.suggest(pdf).items():
+            shown = ", ".join(f"{label!r} ({score:.0f})" for label, score in hits)
+            print(f"  ? {pdf.name}: {name!r} not found; closest rows: {shown}", file=sys.stderr)
+            learned.setdefault(name, []).append(hits[0][0])
+    if args.remember and args.memory and learned:
+        from .aliases import save_memory
+
+        save_memory(args.memory, {k: sorted(set(v)) for k, v in learned.items()})
+        print(f"  saved {len(learned)} alias suggestion(s) to {args.memory}", file=sys.stderr)
 
 
 def _cmd_inspect(args: argparse.Namespace) -> int:

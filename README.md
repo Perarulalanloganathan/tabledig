@@ -99,6 +99,10 @@ Other useful flags: `--password` (encrypted PDFs), `--decimal comma` (force `1.2
 `--normalize-units` (turn "in thousands" into full values), `--top-k N`, `--min-score N`,
 `--column "Q2 Budget"` (only matching columns; `--column latest` = most recent period).
 
+Built-in synonym packs (`--pack finance`, `healthcare`, `sports`, `government`, `all`) add common
+wordings for the attributes you ask for. `--suggest` shows near-miss rows for anything not found, and
+`--memory aliases.yaml` re-uses aliases you accepted (`--suggest --remember` saves them; review the file).
+
 Aliases can go inline: `--attr "Net profit=Profit for the year|PAT"`. Scope a row to a section with
 `--attr "Revenue @ Segment information"`.
 

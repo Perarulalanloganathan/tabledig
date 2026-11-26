@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, Union
 
+from .aliases import apply_memory, apply_packs, load_memory, suggest_aliases
 from .config import coerce_attributes
 from .matcher import score_label
 from .models import Attribute, Record, Table
@@ -130,8 +131,14 @@ class Extractor:
         explain: bool = False,
         skip_columns: re.Pattern = DEFAULT_SKIP_COLUMNS,
         columns: Optional[Sequence[str]] = None,
+        packs: Optional[Sequence[str]] = None,
+        memory: Optional[Union[str, Path]] = None,
     ) -> None:
         self.attributes = coerce_attributes(attributes)
+        if packs:
+            self.attributes = apply_packs(self.attributes, packs)
+        if memory:
+            self.attributes = apply_memory(self.attributes, load_memory(memory))
         self.min_score = min_score
         self.top_k = max(1, top_k)
         self.normalize_units = normalize_units
@@ -146,6 +153,18 @@ class Extractor:
         self.skip_columns = skip_columns
         self.columns = [columns] if isinstance(columns, str) else list(columns or [])
         self._latest = [c.lower() for c in self.columns] == ["latest"]
+
+    def suggest(self, path: Union[str, Path]) -> dict[str, list[tuple[str, float]]]:
+        """For attributes not found in ``path``: near-miss row labels worth trying as aliases."""
+        found = {r.attribute for r in self.extract_file(path) if r.status == "found"}
+        tables = read_tables(path, password=self.password, ocr=self.ocr, ocr_lang=self.ocr_lang)
+        out = {}
+        for attr in self.attributes:
+            if attr.name not in found:
+                hits = suggest_aliases(tables, attr, ceiling=attr.min_score or self.min_score)
+                if hits:
+                    out[attr.name] = hits
+        return out
 
     # -- single file --------------------------------------------------------
     def extract_file(self, path: Union[str, Path]) -> list[Record]:

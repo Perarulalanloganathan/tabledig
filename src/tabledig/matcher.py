@@ -71,6 +71,9 @@ def score_label(query: str, label: str, mode: str = "fuzzy") -> tuple[float, str
             return 90.0, "contains"
         return 0.0, "none"
 
+    if len(q.replace(" ", "")) <= 2 and q.isascii():
+        return 0.0, "none"  # initials like "P" or "TO" must match whole words, never fuzzily
+
     # fuzzy
     q_set, l_set = set(q_tokens), set(l_tokens)
     overlap = len(q_set & l_set)

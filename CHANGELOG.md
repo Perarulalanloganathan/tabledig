@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0
+
+- Synonym packs (`--pack finance|healthcare|sports|government|all` or your own `.yaml`): only add aliases
+  to attributes you asked for. Plain YAML in `src/tabledig/packs/`.
+- `--suggest` lists near-miss row labels for attributes not found; `--memory FILE` loads remembered aliases;
+  `--suggest --remember --memory FILE` saves the best suggestion per missing attribute (review the file).
+- Fix: one- and two-letter names/aliases ("P", "TO") now match whole words only; they used to fuzzy-match
+  names such as "Brinderson, L.P.".
+- Not shipped: the optional embedding matcher (`tabledig[semantic]`). It needs a model download I could not
+  evaluate here, and an untested matcher would undermine the point of the project.
+
 ## 0.6.0
 
 - `benchmarks/scan_eval.py`: OCR evaluated on 19 real scanned receipts (CC0, pinned commit, not stored

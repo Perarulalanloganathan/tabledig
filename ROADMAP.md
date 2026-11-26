@@ -56,11 +56,11 @@ Fix the failures we already know about, then the next ones the eval exposes.
 - [x] 10+ *real* scanned cases in the eval, tracked separately (`benchmarks/scan_eval.py`, 19 receipts, 0.6.0).
 
 ### v0.7 - Smarter matching
-- [ ] Built-in **synonym packs** (finance, healthcare labs, sports, government) as plain YAML, user-extensible.
+- [x] Built-in **synonym packs** (0.7.0) (finance, healthcare labs, sports, government) as plain YAML, user-extensible.
 - [ ] Optional `tabledig[semantic]` extra: small local embedding model for "turnover" ~ "revenue".
   Off by default; the lexical matcher stays the baseline and the eval compares both.
-- [ ] Alias suggestions: after a run, propose aliases from near-misses ("Net profit" -> "Profit for the year").
-- [ ] Learned alias memory file so repeat users stop re-typing aliases.
+- [x] Alias suggestions (0.7.0): after a run, propose aliases from near-misses ("Net profit" -> "Profit for the year").
+- [x] Learned alias memory file (0.7.0) so repeat users stop re-typing aliases.
 
 ### v0.8 - Integrations and developer experience
 - [ ] Stable JSON schema for results (published, versioned) and typed Python API.

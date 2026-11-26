@@ -1,0 +1,12 @@
+# Box-score and league-table wordings.
+Points: [PTS, Pts, Total points]
+Rebounds: [REB, Total rebounds, TRB]
+Assists: [AST, Ast]
+Goals: [Goals scored, GF, Goals for]
+Goals against: [GA, Goals conceded]
+Wins: [Won, Victories]
+Losses: [Lost, Defeats]
+Games played: [GP, Played, Matches]
+Minutes: [MIN, Mins, Minutes played]
+Steals: [STL]
+Turnovers: [TO, TOV]
