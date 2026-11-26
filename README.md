@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/Perarulalanloganathan/tabledig/actions/workflows/ci.yml/badge.svg)](https://github.com/Perarulalanloganathan/tabledig/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+[![Live demo](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://tabledig.streamlit.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Give it a PDF and the names of the things you want. Get back their values.
@@ -30,6 +31,8 @@ Tell the tool that once with an alias and it is found:
 ```
 
 ## Try it in the browser
+
+**Live demo: https://tabledig.streamlit.app** (no install needed).
 
 A Streamlit app lets you upload a PDF (or pick a sample), list the attributes you want, and see
 the results, every detected table, and a CSV download:
@@ -192,7 +195,7 @@ Streamlit demo and `benchmarks/` the benchmark.
 - [x] Web demo (Streamlit)
 - [x] Synthetic benchmark
 - [ ] Benchmark on labeled real public filings (SEC / Companies House)
-- [ ] Hosted public demo link
+- [x] Hosted public demo: https://tabledig.streamlit.app
 
 ## Development
 
