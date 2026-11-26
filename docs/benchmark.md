@@ -9,10 +9,10 @@ penalised for `1,234` or `(5)`. A case passes if the returned values start with 
 |---|---:|---:|
 | pdfplumber `extract_tables()` + lookup | 6 (40%) | 8 (13%) |
 | pdfplumber + a regex over text lines | 11 (73%) | 55 (90%) |
-| Camelot (lattice, then stream) + lookup | 10 (67%) | 50 (82%) |
+| Camelot 2.2 (lattice, then stream) + lookup | 8 (53%) | 50 (82%) |
 | **tabledig** | 15 (100%) | 61 (100%) |
 
-76 cases; the 5 cases that select a column are left out because a plain lookup cannot express them.
+Numbers are from the CI run (Camelot 2.2; Camelot 1.0.9 scored 10/15 on the tuned group). 76 cases; the 5 cases that select a column are left out because a plain lookup cannot express them.
 
 ## Read this carefully
 
