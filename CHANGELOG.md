@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.8.0
+
+- **MCP server** (`tabledig-mcp`, `pip install "tabledig[mcp]"`): tools `extract_attributes`,
+  `inspect_tables`, `suggest_aliases`. `TABLEDIG_MCP_ROOT` limits which folder it may read. Tested over
+  stdio and with both mcp 1.x and 2.x.
+- **Published result schema** (`tabledig schema`, `tabledig.result_schema()`), version 1; the JSON output is
+  validated against it in tests.
+- **Resumable batches**: `--cache DIR` stores results per file content and settings; re-running skips
+  finished files.
+- **Dockerfile** (with Tesseract). Built and smoke-tested in CI; I could not run Docker in my sandbox.
+- `docs/troubleshooting.md`: "why did it not match" guide.
+- Not shipped: a hosted docs site and the bring-your-own-LLM fallback hook.
+
 ## 0.7.0
 
 - Synonym packs (`--pack finance|healthcare|sports|government|all` or your own `.yaml`): only add aliases

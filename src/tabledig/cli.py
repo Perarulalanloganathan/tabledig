@@ -57,6 +57,11 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="NAME",
         help="synonym pack: finance, healthcare, sports, government, all, or a .yaml path (repeatable)",
     )
+    ex.add_argument(
+        "--cache",
+        metavar="DIR",
+        help="cache results per file+settings in DIR; re-running a big batch skips finished files",
+    )
     ex.add_argument("--memory", metavar="FILE", help="YAML file of remembered aliases to load")
     ex.add_argument(
         "--suggest",
@@ -95,6 +100,8 @@ def _build_parser() -> argparse.ArgumentParser:
     ex.add_argument("--no-missing", action="store_true", help="omit attributes that were not found")
     ex.add_argument("-j", "--workers", type=int, default=1, help="parallel processes for many PDFs")
 
+    sub.add_parser("schema", help="print the JSON Schema of the json output")
+
     ins = sub.add_parser("inspect", help="show the tables detected in a PDF (to pick attribute names)")
     ins.add_argument("pdf")
     ins.add_argument("--page", type=int, help="only this page (1-based)")
@@ -131,6 +138,7 @@ def _cmd_extract(args: argparse.Namespace) -> int:
         columns=args.column,
         packs=args.pack,
         memory=args.memory,
+        cache_dir=args.cache,
         decimal={"auto": None, "dot": ".", "comma": ","}[args.decimal],
     )
     pdfs = _collect_pdfs(args.paths)
@@ -188,6 +196,13 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = _build_parser().parse_args(argv)
     try:
+        if args.command == "schema":
+            import json
+
+            from .output import result_schema
+
+            print(json.dumps(result_schema(), indent=2))
+            return 0
         return _cmd_extract(args) if args.command == "extract" else _cmd_inspect(args)
     except (FileNotFoundError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)

@@ -103,6 +103,13 @@ Built-in synonym packs (`--pack finance`, `healthcare`, `sports`, `government`, 
 wordings for the attributes you ask for. `--suggest` shows near-miss rows for anything not found, and
 `--memory aliases.yaml` re-uses aliases you accepted (`--suggest --remember` saves them; review the file).
 
+For big batches add `--cache .tabledig-cache`: finished files are skipped on re-runs. Results follow a
+published JSON schema (`tabledig schema`). Stuck? See [docs/troubleshooting.md](docs/troubleshooting.md).
+
+**For AI assistants:** `pip install "tabledig[mcp]"` then run `tabledig-mcp` to expose `extract_attributes`,
+`inspect_tables` and `suggest_aliases` over MCP; set `TABLEDIG_MCP_ROOT` to limit which folder it can read.
+A `Dockerfile` (with Tesseract) is included: `docker build -t tabledig .`.
+
 Aliases can go inline: `--attr "Net profit=Profit for the year|PAT"`. Scope a row to a section with
 `--attr "Revenue @ Segment information"`.
 

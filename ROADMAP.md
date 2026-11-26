@@ -63,10 +63,10 @@ Fix the failures we already know about, then the next ones the eval exposes.
 - [x] Learned alias memory file (0.7.0) so repeat users stop re-typing aliases.
 
 ### v0.8 - Integrations and developer experience
-- [ ] Stable JSON schema for results (published, versioned) and typed Python API.
-- [ ] **MCP server / LLM tool wrapper** so assistants can call tabledig as a trustworthy extraction tool.
-- [ ] Docker image; batch mode with caching and resumable runs for thousands of PDFs.
-- [ ] Docs site with a gallery of real examples and a "why did it not match" troubleshooting guide.
+- [x] Stable JSON schema for results (published, versioned; 0.8.0). Typed Python API still to do.
+- [x] **MCP server / LLM tool wrapper** so assistants can call tabledig as a trustworthy extraction tool.
+- [x] Docker image; batch mode with caching and resumable runs (0.8.0).
+- [~] "Why did it not match" guide shipped (docs/troubleshooting.md, 0.8.0); hosted docs site and gallery still to do.
 - [ ] Optional LLM fallback hook (bring-your-own model) for rows the rules cannot resolve, always marked as such.
 
 ### v1.0 - Credible and stable

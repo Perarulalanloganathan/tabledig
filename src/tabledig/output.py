@@ -113,3 +113,9 @@ def write_records(
         write_csv(records, path, wide=wide)
     else:
         raise ValueError(f"unsupported output format: {fmt!r}")
+
+
+def result_schema() -> dict:
+    """The JSON Schema (draft 2020-12) describing ``--format json`` output, schema version 1."""
+    path = Path(__file__).parent / "result.schema.json"
+    return json.loads(path.read_text(encoding="utf-8"))

@@ -1,12 +1,15 @@
 """Core engine: look attributes up in the tables of one or many PDFs."""
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Optional, Sequence, Union
 
+from . import __version__
 from .aliases import apply_memory, apply_packs, load_memory, suggest_aliases
 from .config import coerce_attributes
 from .matcher import score_label
@@ -133,6 +136,7 @@ class Extractor:
         columns: Optional[Sequence[str]] = None,
         packs: Optional[Sequence[str]] = None,
         memory: Optional[Union[str, Path]] = None,
+        cache_dir: Optional[Union[str, Path]] = None,
     ) -> None:
         self.attributes = coerce_attributes(attributes)
         if packs:
@@ -151,6 +155,7 @@ class Extractor:
         self.evidence = evidence
         self.explain = explain
         self.skip_columns = skip_columns
+        self.cache_dir = Path(cache_dir) if cache_dir else None
         self.columns = [columns] if isinstance(columns, str) else list(columns or [])
         self._latest = [c.lower() for c in self.columns] == ["latest"]
 
@@ -317,10 +322,44 @@ class Extractor:
         return [record for chunk in chunks for record in chunk]
 
     def _safe_file(self, path: Path) -> list[Record]:
+        cached = self._cache_load(path)
+        if cached is not None:
+            return cached
         try:
-            return self.extract_file(path)
+            records = self.extract_file(path)
         except Exception as exc:  # one bad PDF must not stop a batch
             return [Record(path.name, "*", "error", note=_describe_error(exc))]
+        self._cache_store(path, records)
+        return records
+
+    # -- resumable batches: results cached per (file content, settings) ----------
+    def _cache_key(self, path: Path) -> str:
+        h = hashlib.sha256()
+        h.update(path.read_bytes())
+        settings = (self.attributes, self.min_score, self.top_k, self.normalize_units, self.include_missing,
+                    self.decimal, self.ocr, self.ocr_lang, self.validate, self.evidence, self.explain,
+                    self.columns, __version__)
+        h.update(repr(settings).encode())
+        return h.hexdigest()
+
+    def _cache_load(self, path: Path) -> Optional[list[Record]]:
+        if not self.cache_dir:
+            return None
+        entry = self.cache_dir / f"{self._cache_key(path)}.json"
+        try:
+            rows = json.loads(entry.read_text(encoding="utf-8"))
+            return [Record(**{**r, "file": path.name}) for r in rows]
+        except (OSError, ValueError, TypeError):
+            return None
+
+    def _cache_store(self, path: Path, records: list[Record]) -> None:
+        if not self.cache_dir:
+            return
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        entry = self.cache_dir / f"{self._cache_key(path)}.json"
+        tmp = entry.with_suffix(".tmp")
+        tmp.write_text(json.dumps([asdict(r) for r in records]), encoding="utf-8")
+        tmp.replace(entry)  # atomic: an interrupted run never leaves a half-written entry
 
 
 _YEAR = re.compile(r"(?<!\d)((?:19|20)\d{2})(?:\s*[-/\u2013]\s*(\d{2}))?(?!\d)")

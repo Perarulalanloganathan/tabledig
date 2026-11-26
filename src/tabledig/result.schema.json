@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Perarulalanloganathan/tabledig/schema/result/1",
+  "title": "tabledig result (schema version 1)",
+  "description": "What `tabledig extract -o out.json` writes: a list of records, one per attribute x column. Fields are only ever added in minor versions; the six core fields never change meaning within version 1.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["file", "attribute", "status"],
+    "properties": {
+      "file": {"type": "string"},
+      "attribute": {"type": "string"},
+      "status": {"enum": ["found", "not_found", "error"]},
+      "matched_label": {"type": ["string", "null"]},
+      "page": {"type": ["integer", "null"], "minimum": 1},
+      "column": {"type": ["string", "null"]},
+      "raw_value": {"type": ["string", "null"]},
+      "value": {"type": ["number", "null"]},
+      "unit": {"type": ["string", "null"]},
+      "score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+      "method": {"type": ["string", "null"]},
+      "source": {"enum": ["ruled", "text", "ocr", "kv", null]},
+      "note": {"type": ["string", "null"]},
+      "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+      "check": {"enum": ["verified", "partial", "mismatch", "unchecked", null]},
+      "check_note": {"type": ["string", "null"]},
+      "row_text": {"type": ["string", "null"]},
+      "alternatives": {"type": ["string", "null"]}
+    },
+    "additionalProperties": false
+  }
+}
