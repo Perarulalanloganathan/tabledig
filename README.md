@@ -216,13 +216,9 @@ in this repository.
 
 ## Roadmap
 
-- [ ] Optional embedding / LLM matcher for synonyms with confidence scores
-- [ ] OCR for scanned pages
-- [ ] Column detection from word positions for borderless tables
-- [x] Web demo (Streamlit)
-- [x] Synthetic benchmark
-- [ ] Benchmark on labeled real public filings (SEC / Companies House)
-- [x] Hosted public demo: https://tabledig.streamlit.app
+The plan to make this the best open-source tool for named-value extraction from PDF tables
+(trust and validation, harder layouts, scans, smarter matching, PyPI 1.0) is in
+[ROADMAP.md](ROADMAP.md), with measurable targets.
 
 ## Development
 
