@@ -96,9 +96,11 @@ Output is **long format** by default (one row per attribute x column). `--wide` 
 per attribute with a column per table column (e.g. one per year).
 
 Other useful flags: `--password` (encrypted PDFs), `--decimal comma` (force `1.234,56` style numbers),
-`--normalize-units` (turn "in thousands" into full values), `--top-k N`, `--min-score N`.
+`--normalize-units` (turn "in thousands" into full values), `--top-k N`, `--min-score N`,
+`--column "Q2 Budget"` (only matching columns; `--column latest` = most recent period).
 
-Aliases can go inline: `--attr "Net profit=Profit for the year|PAT"`.
+Aliases can go inline: `--attr "Net profit=Profit for the year|PAT"`. Scope a row to a section with
+`--attr "Revenue @ Segment information"`.
 
 ### 3. Or use it from Python
 

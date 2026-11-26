@@ -95,7 +95,15 @@ def _build_ruled_table(
         while rows and len(levels) < 3 and _looks_like_header(rows[0]):
             levels.append(rows.pop(0))
         header = _merge_header_rows(*levels) if len(levels) > 1 else levels[0]
-    return Table(page=page, index=index, header=header, rows=rows, source="ruled", unit=unit)
+    sections, current = [], ""
+    for r in rows:
+        filled = [c for c in r if c]
+        if len(filled) == 1 and parse_number(filled[0]) is None:
+            current = filled[0]  # a heading row spanning the table
+        sections.append(current)
+    return Table(
+        page=page, index=index, header=header, rows=rows, source="ruled", unit=unit, sections=sections
+    )
 
 
 def _split_numeric_tail(line: str) -> tuple[str, list[str]]:
@@ -218,9 +226,13 @@ def _build_text_tables(
     tables: list[Table] = []
     current_rows: list[tuple[str, list[str]]] = []
     current_header: list[str] = []
+    current_sections: list[str] = []
+    heading = ""
+    before_heading = ""  # the heading in force before the latest text-only line
+    last_text = ""  # the previous line, if it had no numbers (a possible wrapped label start)
 
     def flush() -> None:
-        nonlocal current_rows, current_header
+        nonlocal current_rows, current_header, current_sections
         if current_rows:
             widest = max(len(v) for _, v in current_rows)
             width = len(current_header) or widest
@@ -248,9 +260,10 @@ def _build_text_tables(
                     rows=rows,
                     source="text",
                     unit=unit,
+                    sections=list(current_sections),
                 )
             )
-        current_rows, current_header = [], []
+        current_rows, current_header, current_sections = [], [], []
 
     for line in text.splitlines():
         line = _strip_leaders(line)
@@ -261,14 +274,25 @@ def _build_text_tables(
             continue
         label, tail = _split_numeric_tail(line)
         if not tail:
+            if 2 <= len(line.strip()) <= 80:
+                before_heading, heading = heading, line.strip()
+                last_text = heading
+            else:
+                last_text = ""
             continue
         if len(tail) >= 2 and all(is_year_like(t) for t in tail):
             flush()  # a header such as "Particulars  2024  2023"
             current_header = tail
             continue
         if not is_labelish(label):
+            last_text = ""
             continue
+        if last_text and label[:1].islower() and not last_text.endswith(":"):
+            label = f"{last_text} {label}"  # label wrapped onto the next line
+            heading = before_heading
+        last_text = ""
         current_rows.append((label, tail))
+        current_sections.append(heading)
     flush()
     return tables
 

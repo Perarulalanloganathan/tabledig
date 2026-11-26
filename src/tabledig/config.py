@@ -45,6 +45,7 @@ def _one(item: Any) -> Attribute:
             aliases=_split_aliases(item.get("aliases")),
             mode=mode,
             min_score=float(min_score) if min_score not in (None, "") else None,
+            section=str(item["section"]).strip() if item.get("section") else None,
         )
     raise TypeError(f"cannot build an attribute from {type(item).__name__}")
 
@@ -60,7 +61,10 @@ def parse_attribute_line(line: str) -> Optional[Attribute]:
     name, _, rest = text.partition("=")
     if not name.strip():
         return None
-    return Attribute(name=name.strip(), aliases=_split_aliases(rest))
+    name, _, section = name.partition("@")  # "Revenue @ Segment information"
+    return Attribute(
+        name=name.strip(), aliases=_split_aliases(rest), section=section.strip() or None
+    )
 
 
 def parse_attribute_lines(text: str) -> list[Attribute]:

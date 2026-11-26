@@ -27,6 +27,7 @@ class Table:
     rows: list[list[str]]
     source: str  # "ruled" (drawn grid) or "text" (whitespace-aligned lines)
     unit: Optional[Unit] = None
+    sections: list[str] = field(default_factory=list)  # heading above each row (may be empty)
 
 
 @dataclass
@@ -37,6 +38,7 @@ class Attribute:
     aliases: list[str] = field(default_factory=list)
     mode: str = "fuzzy"  # "fuzzy" | "exact" | "contains"
     min_score: Optional[float] = None
+    section: Optional[str] = None  # only rows under a heading matching this text
 
     @property
     def names(self) -> list[str]:

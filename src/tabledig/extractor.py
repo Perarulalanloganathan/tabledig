@@ -145,6 +145,7 @@ class Extractor:
         self.explain = explain
         self.skip_columns = skip_columns
         self.columns = [columns] if isinstance(columns, str) else list(columns or [])
+        self._latest = [c.lower() for c in self.columns] == ["latest"]
 
     # -- single file --------------------------------------------------------
     def extract_file(self, path: Union[str, Path]) -> list[Record]:
@@ -203,6 +204,8 @@ class Extractor:
                 if label is None:
                     continue
 
+                if attribute.section and not self._in_section(table, row_idx, attribute.section):
+                    continue
                 best_score, best_method = 0.0, "none"
                 for name in attribute.names:
                     score, method = score_label(name, label, attribute.mode)
@@ -216,11 +219,13 @@ class Extractor:
                     column = table.header[j] if j < len(table.header) and table.header[j] else f"col_{j + 1}"
                     if self.skip_columns.match(column):
                         continue
-                    if self.columns and not self._column_wanted(column):
+                    if self.columns and not self._latest and not self._column_wanted(column):
                         continue
                     number = parse_number(row[j], self.decimal)
                     if number is not None:
                         values.append((column, row[j], number))
+                if self._latest:
+                    values = _latest_only(values)
                 if not values:
                     continue  # a heading row, not a data row
 
@@ -232,6 +237,15 @@ class Extractor:
 
         found.sort(key=lambda c: c.key, reverse=True)
         return found
+
+    @staticmethod
+    def _in_section(table: Table, row_idx: int, section: str) -> bool:
+        if row_idx >= len(table.sections):
+            return False
+        heading = table.sections[row_idx]
+        if not heading:
+            return False
+        return score_label(section, heading, "contains")[0] >= 90 or score_label(section, heading)[0] >= 80
 
     def _column_wanted(self, column: str) -> bool:
         """True if ``column`` matches one of the requested column names (word-wise, or fuzzy)."""
@@ -288,6 +302,30 @@ class Extractor:
             return self.extract_file(path)
         except Exception as exc:  # one bad PDF must not stop a batch
             return [Record(path.name, "*", "error", note=_describe_error(exc))]
+
+
+_YEAR = re.compile(r"(?<!\d)((?:19|20)\d{2})(?:\s*[-/\u2013]\s*(\d{2}))?(?!\d)")
+
+
+def _period_key(column: str) -> Optional[int]:
+    """Latest year named in a column header (``2023-24`` counts as 2024), or None."""
+    best = None
+    for m in _YEAR.finditer(column):
+        year = int(m.group(1))
+        if m.group(2):
+            year = year // 100 * 100 + int(m.group(2))
+        best = year if best is None else max(best, year)
+    return best
+
+
+def _latest_only(values: list) -> list:
+    """Keep the values in the column(s) naming the most recent period; all if none is dated."""
+    keys = [_period_key(v[0]) for v in values]
+    dated = [k for k in keys if k is not None]
+    if not dated:
+        return values
+    top = max(dated)
+    return [v for v, k in zip(values, keys) if k == top]
 
 
 def extract(

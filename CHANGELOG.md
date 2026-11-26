@@ -1,10 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.5.2
 
 - Headers: up to three stacked header rows are merged, with merged cells spanning their columns
   (`2024 Q1 Actual`).
 - New `columns=[...]` option / `--column NAME` flag keeps only matching columns (`Q2 Budget`).
+- Wrapped row labels in borderless tables are joined ("Net cash used in investing" + "activities ...").
+- Section scoping: `Revenue @ Segment information` (or `section:` in YAML/CSV) matches only rows
+  under a heading containing that text.
+- `--column latest` keeps only the most recent period's column(s).
 - Demo: pinned to a release tag (a stale unpinned install broke it) and OCR enabled.
 
 ## 0.5.1

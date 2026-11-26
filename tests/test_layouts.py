@@ -135,3 +135,43 @@ def test_column_selection_with_merged_header(tmp_path):
     assert got == {"2024 Q2 Budget": 110}
     both = [r.value for r in extract(path, ["Revenue"], columns=["Q1"]) if r.status == "found"]
     assert both == [100, 90]
+
+
+def test_section_scoping_and_latest_period(tmp_path):
+    lines = [
+        (50, 780, "Segment information"),
+        (50, 765, "Revenue            1,000    900"),
+        (50, 740, "Group totals"),
+        (50, 725, "Revenue            5,000    4,500"),
+    ]
+    path = _pdf(tmp_path, [(x, y, t) for x, y, t in lines])
+    from tabledig.config import parse_attribute_line
+
+    attr = parse_attribute_line("Revenue @ Group totals")
+    assert attr.section == "Group totals"
+    got = [r.value for r in extract(path, [attr]) if r.status == "found"]
+    assert got == [5000, 4500]
+    seg = parse_attribute_line("Revenue @ Segment")
+    other = [r.value for r in extract(path, [seg]) if r.status == "found"]
+    assert other == [1000, 900]
+
+
+def test_latest_column(tmp_path):
+    data = [["Item", "FY 2023", "FY 2024"], ["Revenue", "90", "100"]]
+    path = _ruled_pdf(tmp_path, data, [90, 80, 80])
+    got = [r.value for r in extract(path, ["Revenue"], columns=["latest"]) if r.status == "found"]
+    assert got == [100]
+
+
+def test_wrapped_label_in_borderless_table(tmp_path):
+    path = _pdf(
+        tmp_path,
+        [
+            (50, 780, "Cash flow statement"),
+            (50, 765, "Net cash used in investing"),
+            (50, 752, "activities            (1,200)    (900)"),
+            (50, 735, "Net cash from operations   3,000   2,500"),
+        ],
+    )
+    recs = [r for r in extract(path, ["Net cash used in investing activities"]) if r.status == "found"]
+    assert [r.value for r in recs] == [-1200, -900]

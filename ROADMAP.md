@@ -44,10 +44,10 @@ Fix the failures we already know about, then the next ones the eval exposes.
 - [x] Value-before-label rows ("327 BALLOTS CAST") and key-value lists (0.5.0).
 - [~] Side-by-side blocks on one page: handled for `label value` pairs (0.5.0). Still to do: true newspaper
   columns of prose and per-column table detection.
-- [ ] Wrapped row labels in borderless tables.
+- [x] Wrapped row labels in borderless tables (0.5.2).
 - [x] Multi-row and merged headers (up to three rows); column selection (`--column`).
-- [ ] **Column selection**: ask for "FY 2024" only, or "latest period", instead of every column.
-- [ ] **Section scoping**: "Revenue" *within* "Segment information"; disambiguate repeated labels.
+- [x] **Column selection**: `--column "FY 2024"` or `--column latest`.
+- [x] **Section scoping**: `Revenue @ Segment information`.
 
 ### v0.6 - Scanned documents
 - [x] Optional `tabledig[ocr]` extra (Tesseract; shipped in 0.4.0, pulled forward). Same API; OCR confidence feeds the value
