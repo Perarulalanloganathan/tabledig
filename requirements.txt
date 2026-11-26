@@ -3,4 +3,6 @@
 streamlit>=1.35
 pandas>=1.5
 openpyxl>=3.1
-tabledig @ git+https://github.com/Perarulalanloganathan/tabledig.git@main
+# Pinned to a release tag: Streamlit Cloud caches git installs, so an unpinned @main goes stale.
+# Bump this tag when releasing.
+tabledig[ocr] @ git+https://github.com/Perarulalanloganathan/tabledig.git@v0.5.1
