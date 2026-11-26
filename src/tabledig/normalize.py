@@ -92,7 +92,7 @@ def parse_number(text: object, decimal: Optional[str] = None) -> Optional[float]
     if s.lower() in _DASHES:
         return 0.0
 
-    s = _CURRENCY.sub("", s).strip()
+    s = _CURRENCY.sub("", s).strip().strip("\u2018\u2019\u201c\u201d'\"`").strip()  # OCR specks
     negative = False
     if s.startswith("(") and s.endswith(")"):
         if s.endswith("%)"):  # "(8%)" is a rate in a label, not a negative value

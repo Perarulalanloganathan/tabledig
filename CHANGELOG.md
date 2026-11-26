@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- OCR: `--ocr force` re-reads pages that already have a text layer (e.g. scanner output).
+- OCR: a second Tesseract layout pass recovers lines the first pass loses (large-print totals).
+- Numbers: stray quote marks left by OCR (`'19.88`) no longer break parsing.
+- Tested on 12 real scanned receipts (CC0 `JensWalter/my-receipts`): 10/12 totals correct
+  with forced OCR vs 7/12 from the scanners' own text layers. The misses were a garbled
+  digit and white-on-black print. Small sample; treat as indicative, not a benchmark.
+
 ## 0.5.0
 - **Key-value fallback** (`source = kv`): value-before-label rows, several blocks on one line / side-by-side
   page columns, dot-leader rows with qualifiers like "Up to $3,790". Used only when no real table row matches.

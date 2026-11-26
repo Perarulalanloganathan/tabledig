@@ -92,15 +92,32 @@ def remove_rules(image, dpi: int = 300):
 
 def ocr_page_text(page, lang: str = "eng", dpi: int = 300) -> str:
     """Run OCR on a pdfplumber page and return layout-preserving text."""
-    import pytesseract
-
     image = page.to_image(resolution=dpi).original.convert("L")
     try:
         image = remove_rules(image, dpi)
     except ImportError:  # numpy missing: OCR still works, just less well on bordered tables
         pass
+    first = _pass(image, lang, 6)
+    # A second layout hypothesis (columns/blocks) recovers lines the line-by-line
+    # pass loses, e.g. a large-print TOTAL on a receipt. Only unseen lines are added.
+    seen = {_squash(line) for line in first.splitlines()}
+    extra = [
+        line
+        for line in _pass(image, lang, 4).splitlines()
+        if line.strip() and _squash(line) not in seen
+    ]
+    return first + ("\n" + "\n".join(extra) if extra else "")
+
+
+def _squash(line: str) -> str:
+    return "".join(line.lower().split())
+
+
+def _pass(image, lang: str, psm: int) -> str:
+    import pytesseract
+
     data = pytesseract.image_to_data(
-        image, lang=lang, config="--psm 6", output_type=pytesseract.Output.DICT
+        image, lang=lang, config=f"--psm {psm}", output_type=pytesseract.Output.DICT
     )
     words = []
     for i, text in enumerate(data["text"]):
@@ -120,9 +137,11 @@ def ocr_page_text(page, lang: str = "eng", dpi: int = 300) -> str:
 
 
 def resolve_mode(mode: Optional[object]) -> str:
-    """Normalise the ``ocr`` option to ``"auto"``, ``"on"`` or ``"off"``."""
+    """Normalise the ``ocr`` option to ``"auto"``, ``"on"``, ``"force"`` or ``"off"``."""
     if mode in (None, "auto"):
         return "auto"
+    if mode in ("force", "always"):
+        return "force"
     if mode in (False, "off", "no", "false", "0"):
         return "off"
     if mode in (True, "on", "yes", "true", "1"):

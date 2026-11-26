@@ -63,8 +63,9 @@ def _build_parser() -> argparse.ArgumentParser:
     ex.add_argument("--evidence", action="store_true", help="include the full source row text")
     ex.add_argument("--explain", action="store_true", help="include runner-up labels that were not chosen")
     ex.add_argument(
-        "--ocr", choices=["auto", "on", "off"], default="auto",
-        help="OCR for scanned pages: auto (if installed, default), on (required), off",
+        "--ocr", choices=["auto", "on", "force", "off"], default="auto",
+        help="OCR for scanned pages: auto (if installed, default), on (required), force (ignore any "
+        "existing text layer), off",
     )
     ex.add_argument("--ocr-lang", default="eng", help="Tesseract language code(s), e.g. eng or eng+deu")
     ex.add_argument("--password", default=None, help="password for encrypted PDFs")

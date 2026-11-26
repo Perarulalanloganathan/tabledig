@@ -314,6 +314,7 @@ def read_tables(
 
     Pages with no text layer (scans) are read with OCR when ``ocr`` is ``"auto"`` (the default, used
     only if the optional OCR extra and Tesseract are installed) or ``"on"`` (error if unavailable);
+    ``"force"`` re-reads every page that contains an image even if it already has a (poor) text layer;
     ``"off"`` disables it. Human-readable problems are appended to ``report``.
 
     With ``key_values=True`` one extra table per page (``source == "kv"``) holds ``label value`` /
@@ -329,14 +330,14 @@ def read_tables(
 
     ocr_mode = resolve_mode(ocr)
     can_ocr = ocr_mode != "off" and ocr_available()
-    if ocr_mode == "on" and not can_ocr:
+    if ocr_mode in ("on", "force") and not can_ocr:
         raise RuntimeError("OCR requested but not available: " + INSTALL_HINT)
     tables: list[Table] = []
     previous: Optional[Table] = None
     with pdfplumber.open(str(path), password=password) as pdf:
         for page in pdf.pages:
             text = page.extract_text() or ""
-            scanned = len(text.strip()) < 20 and bool(page.images)
+            scanned = bool(page.images) and (len(text.strip()) < 20 or ocr_mode == "force")
             used_ocr = False
             if scanned:
                 if can_ocr:

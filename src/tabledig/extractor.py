@@ -98,7 +98,8 @@ class Extractor:
         Password for encrypted PDFs.
     ocr:
         ``"auto"`` (default) reads scanned pages with OCR if the ``ocr`` extra and Tesseract are
-        installed; ``"on"`` requires it; ``"off"`` never uses it.
+        installed; ``"on"`` requires it; ``"force"`` re-reads image pages even when they already have a text
+        layer (useful when a scanner's built-in OCR is poor); ``"off"`` never uses it.
     ocr_lang:
         Tesseract language code(s), e.g. ``"eng"`` or ``"eng+deu"``.
     validate:

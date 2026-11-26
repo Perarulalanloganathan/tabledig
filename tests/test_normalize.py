@@ -68,3 +68,9 @@ def test_parse_number_international_formats(text, expected):
 def test_parse_number_forced_decimal_mark():
     assert parse_number("1,234", decimal=",") == 1.234
     assert parse_number("1,234", decimal=".") == 1234.0
+
+
+def test_ocr_specks_around_numbers_are_ignored():
+    assert parse_number("‘19.88") == 19.88
+    assert parse_number("'30.37'") == 30.37
+    assert parse_number("1'234.50") == 1234.50  # Swiss grouping unaffected
