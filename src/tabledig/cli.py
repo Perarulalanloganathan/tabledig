@@ -9,6 +9,7 @@ from typing import Optional, Sequence
 from . import __version__
 from .config import coerce_attributes, load_config, parse_attribute_lines
 from .extractor import Extractor
+from .fallback import SemanticResolver
 from .output import write_records
 from .reader import read_tables
 
@@ -61,6 +62,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--cache",
         metavar="DIR",
         help="cache results per file+settings in DIR; re-running a big batch skips finished files",
+    )
+    ex.add_argument(
+        "--semantic",
+        action="store_true",
+        help="for attributes the matcher cannot find, try a local embedding model (tabledig[semantic])",
     )
     ex.add_argument("--memory", metavar="FILE", help="YAML file of remembered aliases to load")
     ex.add_argument(
@@ -139,6 +145,7 @@ def _cmd_extract(args: argparse.Namespace) -> int:
         packs=args.pack,
         memory=args.memory,
         cache_dir=args.cache,
+        fallback=SemanticResolver() if args.semantic else None,
         decimal={"auto": None, "dot": ".", "comma": ","}[args.decimal],
     )
     pdfs = _collect_pdfs(args.paths)
@@ -204,7 +211,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             print(json.dumps(result_schema(), indent=2))
             return 0
         return _cmd_extract(args) if args.command == "extract" else _cmd_inspect(args)
-    except (FileNotFoundError, ValueError) as exc:
+    except (FileNotFoundError, ValueError, RuntimeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

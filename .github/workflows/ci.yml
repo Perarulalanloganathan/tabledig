@@ -65,3 +65,28 @@ jobs:
       - run: docker build -t tabledig .
       - run: docker run --rm tabledig --version
       - run: docker run --rm --entrypoint tesseract tabledig --version
+
+  semantic-eval:
+    # Informational: how much the optional embedding fallback helps and what it costs in false matches.
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,semantic]"
+      - run: python benchmarks/semantic_eval.py | tee semantic.txt
+      - run: cat semantic.txt >> "$GITHUB_STEP_SUMMARY"
+
+  calibration:
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
+      - run: pip install -e ".[dev]"
+      - run: python benchmarks/calibration.py

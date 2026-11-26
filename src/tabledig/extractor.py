@@ -12,6 +12,7 @@ from typing import Iterable, Optional, Sequence, Union
 from . import __version__
 from .aliases import apply_memory, apply_packs, load_memory, suggest_aliases
 from .config import coerce_attributes
+from .fallback import MAX_FALLBACK_SCORE, Resolver
 from .matcher import score_label
 from .models import Attribute, Record, Table
 from .normalize import is_labelish, parse_number
@@ -56,6 +57,9 @@ def _describe_error(exc: Exception) -> str:
     if "password" in name.lower() or "password" in text.lower() or (name == "PdfminerException" and not text):
         return f"{name}: PDF is password-protected or encrypted; pass password=... (CLI: --password)"
     return f"{name}: {text}" if text else name
+
+
+_LEXICAL_METHODS = {"exact", "normalized", "contains", "fuzzy"}
 
 
 def _confidence(score: float, check_status: Optional[str], source: Optional[str] = None) -> float:
@@ -137,6 +141,7 @@ class Extractor:
         packs: Optional[Sequence[str]] = None,
         memory: Optional[Union[str, Path]] = None,
         cache_dir: Optional[Union[str, Path]] = None,
+        fallback: Optional[Resolver] = None,
     ) -> None:
         self.attributes = coerce_attributes(attributes)
         if packs:
@@ -156,6 +161,7 @@ class Extractor:
         self.explain = explain
         self.skip_columns = skip_columns
         self.cache_dir = Path(cache_dir) if cache_dir else None
+        self.fallback = fallback
         self.columns = [columns] if isinstance(columns, str) else list(columns or [])
         self._latest = [c.lower() for c in self.columns] == ["latest"]
 
@@ -215,10 +221,28 @@ class Extractor:
         found = self._scan(attribute, real)
         if not found:
             found = self._scan(attribute, [t for t in tables if t.source == "kv"])
+        if not found and self.fallback is not None:
+            found = self._resolve(attribute, real)
         return found
 
-    def _scan(self, attribute: Attribute, tables: list[Table]) -> list[_Candidate]:
-        threshold = attribute.min_score if attribute.min_score is not None else self.min_score
+    def _resolve(self, attribute: Attribute, tables: list[Table]) -> list[_Candidate]:
+        """Ask the fallback resolver to pick among rows that have values; it never supplies a value."""
+        pool = self._scan(attribute, tables, threshold=0.0)[:300]
+        if not pool or self.fallback is None:
+            return []
+        choice = self.fallback(attribute, [c.label for c in pool])
+        if choice is None or not 0 <= choice[0] < len(pool):
+            return []
+        picked = pool[choice[0]]
+        picked.score = min(float(choice[1]), MAX_FALLBACK_SCORE)
+        picked.method = str(getattr(self.fallback, "method", "fallback"))
+        return [picked]
+
+    def _scan(
+        self, attribute: Attribute, tables: list[Table], threshold: Optional[float] = None
+    ) -> list[_Candidate]:
+        if threshold is None:
+            threshold = attribute.min_score if attribute.min_score is not None else self.min_score
         found: list[_Candidate] = []
         seen: set[tuple] = set()
 
@@ -287,6 +311,8 @@ class Extractor:
         confidence = None
         if self.validate:
             confidence = _confidence(cand.score, check.status if check else None, cand.table.source)
+            if cand.method not in _LEXICAL_METHODS:
+                confidence = round(confidence * 0.8, 3)  # a resolver's pick is less certain by design
         out = []
         for column, raw, number in cand.values:
             out.append(

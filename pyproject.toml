@@ -26,6 +26,7 @@ dependencies = [
 [project.optional-dependencies]
 excel = ["pandas>=1.5", "openpyxl>=3.1"]
 ocr = ["pytesseract>=0.3.10", "numpy>=1.21"]
+semantic = ["fastembed>=0.3"]
 mcp = ["mcp>=1.2; python_version >= '3.10'"]
 app = ["streamlit>=1.35", "pandas>=1.5", "openpyxl>=3.1"]
 dev = ["pytest>=7", "reportlab>=4", "ruff>=0.4", "mypy>=1.8", "types-PyYAML", "streamlit>=1.35", "pandas>=1.5", "pytesseract>=0.3.10", "numpy>=1.21", "jsonschema>=4", "mcp>=1.2; python_version >= '3.10'"]
@@ -57,4 +58,6 @@ select = ["E", "F", "I"]
 
 [tool.ruff.lint.per-file-ignores]
 "benchmarks/real_eval.py" = ["E501"]
-"benchmarks/scan_eval.py" = ["E501"]  # long case tables and URLs read better unwrapped
+"benchmarks/scan_eval.py" = ["E501"]
+"benchmarks/calibration.py" = ["E501"]
+"benchmarks/semantic_eval.py" = ["E501"]  # long case tables and URLs read better unwrapped
