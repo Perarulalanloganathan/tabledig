@@ -1,0 +1,34 @@
+name: Docs
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install mkdocs mkdocs-material
+      - run: cp ROADMAP.md docs/roadmap.md && cp CHANGELOG.md docs/changelog.md
+      - run: mkdocs build --strict
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    # Enable once: repo Settings > Pages > Source: GitHub Actions, then set repository variable PAGES=on
+    if: github.ref == 'refs/heads/main' && vars.PAGES == 'on'
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

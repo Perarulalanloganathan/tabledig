@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Sequence, Union
 
 from .models import Table, Unit
 from .normalize import detect_unit, is_labelish, is_year_like, parse_number
@@ -59,7 +59,7 @@ def _merge_header_rows(*levels: list[str]) -> list[str]:
     return merged
 
 
-def _explode_stacked(row: list[object]) -> list[list[object]]:
+def _explode_stacked(row: Sequence[object]) -> list[list[object]]:
     """Split a row whose cells each hold several newline-separated values into several rows.
 
     Some PDFs draw a whole column block as one cell ("Alabama\\nAlaska\\n..." next to
@@ -69,19 +69,19 @@ def _explode_stacked(row: list[object]) -> list[list[object]]:
     lines = [str(c).split("\n") if c else [] for c in row]
     sizes = {len(ln) for ln in lines if len(ln) > 1}
     if len(sizes) != 1:
-        return [row]
+        return [list(row)]
     n = sizes.pop()
     numeric_block = any(
         len(ln) == n and all(parse_number(x) is not None for x in ln) for ln in lines
     )
     if not numeric_block:
-        return [row]
+        return [list(row)]
     return [[ln[i].strip() if len(ln) == n else (str(c) if i == 0 else "") for ln, c in zip(lines, row)]
             for i in range(n)]
 
 
 def _build_ruled_table(
-    raw: list[list[object]], page: int, index: int, unit: Optional[Unit]
+    raw: Sequence[Sequence[object]], page: int, index: int, unit: Optional[Unit]
 ) -> Optional[Table]:
     exploded = [piece for r in raw for piece in _explode_stacked(r)]
     rows = [[_clean(c) for c in r] for r in exploded]
@@ -185,7 +185,7 @@ def _kv_rows(text: str) -> list[list[str]]:
         if label_only:
             values = [_last_number(seg) for seg in segments[1:]]
             if all(values):
-                rows.append([segments[0], *values])
+                rows.append([segments[0], *(v or "" for v in values)])
                 continue
 
         blocks: list[tuple[str, list[str]]] = []
@@ -297,6 +297,51 @@ def _build_text_tables(
     return tables
 
 
+def _split_columns(page) -> Optional[list[tuple[float, float, float, float]]]:
+    """Boxes of the text columns if the page is set in two or more columns of words, else None.
+
+    A gutter is a vertical strip at least 14 pt wide that almost no word crosses. A table's gap between
+    its label column and its number column is not a gutter for this purpose: every column must hold mostly
+    words (not numbers), so a two-column table is left alone.
+    """
+    try:
+        words = page.extract_words()
+    except Exception:  # best effort only
+        return None
+    if len(words) < 40:
+        return None
+    width = int(page.width) + 1
+    cover = [0] * width
+    for w in words:
+        for x in range(max(0, int(w["x0"])), min(width, int(w["x1"]) + 1)):
+            cover[x] += 1
+    tolerance = max(1, int(0.03 * len(words)))
+    lo = min(w["x0"] for w in words)
+    hi = max(w["x1"] for w in words)
+    gutters: list[float] = []
+    x = int(lo) + 1
+    while x < hi:
+        if cover[x] <= tolerance:
+            start = x
+            while x < hi and cover[x] <= tolerance:
+                x += 1
+            if x - start >= 14 and start > lo + 0.1 * (hi - lo) and x < hi - 0.1 * (hi - lo):
+                gutters.append((start + x) / 2)
+        else:
+            x += 1
+    if not gutters:
+        return None
+    edges = [lo - 1, *gutters, hi + 1]
+    columns = []
+    for left, right in zip(edges, edges[1:]):
+        inside = [w for w in words if left <= (w["x0"] + w["x1"]) / 2 < right]
+        numeric = sum(1 for w in inside if parse_number(w["text"]) is not None)
+        if len(inside) < 0.15 * len(words) or numeric > 0.4 * len(inside):
+            return None
+        columns.append((max(0.0, left), 0.0, min(float(page.width), right), float(page.height)))
+    return columns
+
+
 def _unique_header(header: list[str]) -> list[str]:
     """Make repeated column names unique ("2024", "2024 (2)") so no value is overwritten."""
     seen: dict[str, int] = {}
@@ -390,8 +435,18 @@ def read_tables(
                         table.header = list(previous.header)
                     built.append(table)
 
+            columns = None if used_ocr else _split_columns(page)
+            # Whole-page reading always happens; for a multi-column page each column is read as well, so a
+            # table spanning the columns and a list confined to one column are both found.
+            column_texts = [text] + (
+                [page.crop(box).extract_text() or "" for box in columns] if columns else []
+            )
             if text_fallback and (_good_rows(built) < 2 or _has_mega_cell(built)):
-                fresh = _build_text_tables(text, page.page_number, len(tables) + len(built), unit)
+                fresh: list[Table] = []
+                for part in column_texts:
+                    fresh += _build_text_tables(
+                        part, page.page_number, len(tables) + len(built) + len(fresh), unit
+                    )
                 if used_ocr:
                     for table in fresh:
                         table.source = "ocr"
@@ -399,11 +454,18 @@ def read_tables(
             for table in built:
                 table.header = _unique_header(table.header)
             if key_values and text.strip():
-                try:
-                    layout = text if used_ocr else (page.extract_text(layout=True) or text)
-                except Exception:  # layout mode is best-effort
-                    layout = text
-                kv = _kv_rows(layout)
+                layouts = []
+                boxes: list[Optional[tuple[float, float, float, float]]] = [None, *(columns or [])]
+                for part, box in zip(column_texts, boxes):
+                    try:
+                        if used_ocr:
+                            layouts.append(part)
+                        else:
+                            target = page.crop(box) if box else page
+                            layouts.append(target.extract_text(layout=True) or part)
+                    except Exception:  # layout mode is best-effort
+                        layouts.append(part)
+                kv = [row for layout in layouts for row in _kv_rows(layout)]
                 if kv:
                     built.append(
                         Table(

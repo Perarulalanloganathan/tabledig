@@ -313,12 +313,12 @@ class Extractor:
 
     # -- many files ---------------------------------------------------------
     def extract_many(self, paths: Iterable[Union[str, Path]], workers: int = 1) -> list[Record]:
-        paths = [Path(p) for p in paths]
-        if workers > 1 and len(paths) > 1:
+        files = [Path(p) for p in paths]
+        if workers > 1 and len(files) > 1:
             with ProcessPoolExecutor(max_workers=workers) as pool:
-                chunks = list(pool.map(self._safe_file, paths))
+                chunks = list(pool.map(self._safe_file, files))
         else:
-            chunks = [self._safe_file(p) for p in paths]
+            chunks = [self._safe_file(p) for p in files]
         return [record for chunk in chunks for record in chunk]
 
     def _safe_file(self, path: Path) -> list[Record]:

@@ -16,3 +16,6 @@ build/
 /output_folder/
 *.exe
 .env
+site/
+docs/roadmap.md
+docs/changelog.md

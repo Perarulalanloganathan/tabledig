@@ -1,0 +1,12 @@
+site_name: tabledig
+site_description: Pull named attributes out of table-style PDFs, and know when to doubt them.
+repo_url: https://github.com/Perarulalanloganathan/tabledig
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Gallery: gallery.md
+  - Command line: cli.md
+  - Troubleshooting: troubleshooting.md
+  - Roadmap: roadmap.md
+  - Changelog: changelog.md

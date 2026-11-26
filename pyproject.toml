@@ -16,6 +16,7 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
   "Topic :: Text Processing",
   "Intended Audience :: Developers",
+  "Typing :: Typed",
 ]
 dependencies = [
   "pdfplumber>=0.10",
@@ -27,7 +28,7 @@ excel = ["pandas>=1.5", "openpyxl>=3.1"]
 ocr = ["pytesseract>=0.3.10", "numpy>=1.21"]
 mcp = ["mcp>=1.2; python_version >= '3.10'"]
 app = ["streamlit>=1.35", "pandas>=1.5", "openpyxl>=3.1"]
-dev = ["pytest>=7", "reportlab>=4", "ruff>=0.4", "streamlit>=1.35", "pandas>=1.5", "pytesseract>=0.3.10", "numpy>=1.21", "jsonschema>=4", "mcp>=1.2; python_version >= '3.10'"]
+dev = ["pytest>=7", "reportlab>=4", "ruff>=0.4", "mypy>=1.8", "types-PyYAML", "streamlit>=1.35", "pandas>=1.5", "pytesseract>=0.3.10", "numpy>=1.21", "jsonschema>=4", "mcp>=1.2; python_version >= '3.10'"]
 
 [project.urls]
 Homepage = "https://github.com/Perarulalanloganathan/tabledig"

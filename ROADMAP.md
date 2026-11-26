@@ -42,8 +42,7 @@ The feature no free library does well: *tell the user when to doubt a value.*
 ### v0.5 - Layout coverage
 Fix the failures we already know about, then the next ones the eval exposes.
 - [x] Value-before-label rows ("327 BALLOTS CAST") and key-value lists (0.5.0).
-- [~] Side-by-side blocks on one page: handled for `label value` pairs (0.5.0). Still to do: true newspaper
-  columns of prose and per-column table detection.
+- [x] Side-by-side blocks and multi-column pages (0.5.0, 0.9.0).
 - [x] Wrapped row labels in borderless tables (0.5.2).
 - [x] Multi-row and merged headers (up to three rows); column selection (`--column`).
 - [x] **Column selection**: `--column "FY 2024"` or `--column latest`.
@@ -63,10 +62,10 @@ Fix the failures we already know about, then the next ones the eval exposes.
 - [x] Learned alias memory file (0.7.0) so repeat users stop re-typing aliases.
 
 ### v0.8 - Integrations and developer experience
-- [x] Stable JSON schema for results (published, versioned; 0.8.0). Typed Python API still to do.
+- [x] Stable JSON schema for results (published, versioned; 0.8.0). Typed package (`py.typed`, mypy in CI; 0.9.0).
 - [x] **MCP server / LLM tool wrapper** so assistants can call tabledig as a trustworthy extraction tool.
 - [x] Docker image; batch mode with caching and resumable runs (0.8.0).
-- [~] "Why did it not match" guide shipped (docs/troubleshooting.md, 0.8.0); hosted docs site and gallery still to do.
+- [~] "Why did it not match" guide shipped (docs/troubleshooting.md, 0.8.0); docs site + gallery built in CI (0.9.0); publishing needs Pages enabled.
 - [ ] Optional LLM fallback hook (bring-your-own model) for rows the rules cannot resolve, always marked as such.
 
 ### v1.0 - Credible and stable

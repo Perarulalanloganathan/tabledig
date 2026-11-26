@@ -20,6 +20,8 @@ jobs:
       - run: pip install -e ".[dev,excel]"
       - run: ruff check .
       - run: pytest -q
+      - run: mypy src/tabledig --ignore-missing-imports
+        if: matrix.python-version == '3.13'
 
   cross-platform:
     runs-on: ${{ matrix.os }}

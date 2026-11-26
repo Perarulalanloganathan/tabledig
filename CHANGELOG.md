@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.0
+
+- **Multi-column pages**: a page set in two or more columns of words is also read column by column
+  (gutter detection that refuses to split label|number tables), in addition to whole-page reading.
+  Real-PDF evaluation unchanged at 36/36; 0 false matches on absent attributes across 361 PDFs.
+- **Typed package**: `py.typed` shipped, `mypy` clean and checked in CI.
+- **Docs site** (MkDocs): home, real-document gallery, CLI reference, troubleshooting, roadmap, changelog.
+  Built with `--strict` in CI; publishing needs Pages enabled once (see the workflow comment).
+
 ## 0.8.0
 
 - **MCP server** (`tabledig-mcp`, `pip install "tabledig[mcp]"`): tools `extract_attributes`,

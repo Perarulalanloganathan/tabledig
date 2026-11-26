@@ -175,3 +175,38 @@ def test_wrapped_label_in_borderless_table(tmp_path):
     )
     recs = [r for r in extract(path, ["Net cash used in investing activities"]) if r.status == "found"]
     assert [r.value for r in recs] == [-1200, -900]
+
+
+def _prose(prefix, n):
+    return [f"{prefix} line {i} words that make up a sentence of ordinary prose text" for i in range(n)]
+
+
+def test_two_column_page_reads_each_column_separately(tmp_path):
+    left = [(50, 780 - 13 * i, t[:40]) for i, t in enumerate(_prose("left", 12))]
+    right = [(320, 780 - 13 * i, t[:40]) for i, t in enumerate(_prose("right", 12))]
+    left += [(50, 600, "Ballots cast   1,200   1,100")]
+    right += [(320, 600, "Registered voters   5,000   4,900")]
+    path = _pdf(tmp_path, left + right)
+    from tabledig import read_tables
+
+    assert [r.value for r in extract(path, ["Ballots cast"]) if r.status == "found"] == [1200, 1100]
+    assert [r.value for r in extract(path, ["Registered voters"]) if r.status == "found"] == [5000, 4900]
+    assert read_tables(path)  # no crash
+    import pdfplumber
+
+    from tabledig.reader import _split_columns
+
+    with pdfplumber.open(path) as pdf:
+        assert len(_split_columns(pdf.pages[0]) or []) == 2
+
+
+def test_label_number_table_is_not_split_into_columns(tmp_path):
+    lines = [(50, 780 - 13 * i, f"Item number {i} of the long ledger") for i in range(45)]
+    lines += [(400, 780 - 13 * i, f"{i * 1000 + 17}") for i in range(45)]
+    path = _pdf(tmp_path, lines)
+    import pdfplumber
+
+    from tabledig.reader import _split_columns
+
+    with pdfplumber.open(path) as pdf:
+        assert _split_columns(pdf.pages[0]) is None

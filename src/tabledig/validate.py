@@ -39,6 +39,10 @@ class Check:
 UNCHECKED = Check("unchecked")
 
 
+def _total_label(label: Optional[str]) -> bool:
+    return bool(label) and _is_total(label or "")
+
+
 def _is_total(label: str) -> bool:
     norm = normalize_label(label)
     return norm.startswith(TOTAL_PREFIXES)
@@ -107,8 +111,8 @@ def _check_total_row(
             if len(block) < 2:
                 continue
             terms_all = [rows[k][col] for k in block]
-            terms_detail = [rows[k][col] for k in block if not (labels[k] and _is_total(labels[k]))]
-            terms_subtotals = [rows[k][col] for k in block if labels[k] and _is_total(labels[k])]
+            terms_detail = [rows[k][col] for k in block if not _total_label(labels[k])]
+            terms_subtotals = [rows[k][col] for k in block if _total_label(labels[k])]
             for terms in (terms_all, terms_detail, terms_subtotals):
                 if len(terms) >= 2 and _sum_reproduces(target, terms, integers):
                     matched = True
