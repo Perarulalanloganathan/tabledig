@@ -29,13 +29,18 @@ def records_to_wide(records: Iterable[Record]) -> tuple[list[str], list[dict]]:
                 "status": r.status,
             },
         )
+        for extra in ("confidence", "check"):
+            value = getattr(r, extra)
+            if value is not None:
+                row[extra] = value
         if r.column is not None:
             if r.column not in columns:
                 columns.append(r.column)
             row[r.column] = r.value
         elif r.note:
             row["note"] = r.note
-    fieldnames = [*WIDE_KEYS, "status", *columns]
+    extras = [e for e in ("confidence", "check") if any(e in row for row in rows.values())]
+    fieldnames = [*WIDE_KEYS, "status", *extras, *columns]
     if any("note" in row for row in rows.values()):
         fieldnames.append("note")
     return fieldnames, list(rows.values())
@@ -48,7 +53,9 @@ def to_dataframe(records: Iterable[Record], wide: bool = False):
     if wide:
         fieldnames, rows = records_to_wide(records)
         return pd.DataFrame(rows, columns=fieldnames)
-    return pd.DataFrame([r.as_dict() for r in records], columns=list(Record.FIELDS))
+    records = list(records)
+    fields = Record.fields_for(records)
+    return pd.DataFrame([r.as_dict(fields) for r in records], columns=fields)
 
 
 def write_csv(records: Iterable[Record], path: Optional[Union[str, Path]], wide: bool = False) -> None:
@@ -58,7 +65,8 @@ def write_csv(records: Iterable[Record], path: Optional[Union[str, Path]], wide:
     if wide:
         fieldnames, rows = records_to_wide(records)
     else:
-        fieldnames, rows = list(Record.FIELDS), [r.as_dict() for r in records]
+        fieldnames = Record.fields_for(records)
+        rows = [r.as_dict(fieldnames) for r in records]
 
     handle = open(path, "w", newline="", encoding="utf-8") if path else sys.stdout
     try:
@@ -73,7 +81,9 @@ def write_csv(records: Iterable[Record], path: Optional[Union[str, Path]], wide:
 def write_json(records: Iterable[Record], path: Optional[Union[str, Path]]) -> None:
     import sys
 
-    payload = json.dumps([r.as_dict() for r in records], indent=2, ensure_ascii=False)
+    records = list(records)
+    fields = Record.fields_for(records)
+    payload = json.dumps([r.as_dict(fields) for r in records], indent=2, ensure_ascii=False)
     if path:
         Path(path).write_text(payload + "\n", encoding="utf-8")
     else:

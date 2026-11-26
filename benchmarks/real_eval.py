@@ -58,6 +58,10 @@ CASES: list[dict] = [
      "opts": {"min_score": 90}},
     {"pdf": "issue-90-example.pdf", "attr": "Ekaterina PUSHKASH / Jonathan GUERREIRO",
      "expect": [49.88], "opts": {"min_score": 90}},
+    {"pdf": NICS, "attr": "Totals", "expect": [804006, 671330, 636903, 26597], "opts": {"min_score": 90},
+     "check": "verified"},
+    {"pdf": "WARN-Report-for-7-1-2015-to-03-25-2016.pdf", "attr": "Total", "column": "Notices",
+     "expect": [632], "opts": {"min_score": 100}, "check": "verified"},
     {"pdf": "la-precinct-bulletin-2014-p1.pdf", "attr": "BALLOTS CAST", "expect": [327],
      "opts": {"min_score": 80}, "known_limit": "number printed before its label"},
     {"pdf": "federal-register-2020-17221.pdf", "attr": "Stabilizer wiring change",
@@ -75,7 +79,8 @@ def ensure_corpus(cache: Path) -> Path:
 
 
 def run_case(case: dict, pdf_dir: Path) -> tuple[bool, list[float]]:
-    records = extract(str(pdf_dir / case["pdf"]), [case["attr"]], **case.get("opts", {}))
+    opts = dict(case.get("opts", {}), validate="check" in case)
+    records = extract(str(pdf_dir / case["pdf"]), [case["attr"]], **opts)
     found = [r for r in records if r.status == "found"]
     col = case.get("column")
     if col:
@@ -83,6 +88,8 @@ def run_case(case: dict, pdf_dir: Path) -> tuple[bool, list[float]]:
     values = [r.value for r in found]
     want = case["expect"]
     ok = len(values) >= len(want) and all(abs(v - w) < 1e-6 for v, w in zip(values, want))
+    if ok and "check" in case:
+        ok = bool(found) and all(r.check == case["check"] for r in found)  # validation verdict must agree
     return ok, values[: len(want)]
 
 

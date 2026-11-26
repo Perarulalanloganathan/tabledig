@@ -60,6 +60,12 @@ class Record:
     method: Optional[str] = None
     source: Optional[str] = None
     note: Optional[str] = None
+    # optional extras (only written when something sets them)
+    confidence: Optional[float] = None  # heuristic 0-1: match score, adjusted by validation
+    check: Optional[str] = None  # "verified" | "mismatch" | "unchecked" (validate=True)
+    check_note: Optional[str] = None
+    row_text: Optional[str] = None  # the whole source row, for evidence (evidence=True)
+    alternatives: Optional[str] = None  # runner-up labels (explain=True)
 
     FIELDS = (
         "file",
@@ -76,6 +82,13 @@ class Record:
         "source",
         "note",
     )
+    EXTRA_FIELDS = ("confidence", "check", "check_note", "row_text", "alternatives")
 
-    def as_dict(self) -> dict:
-        return {name: getattr(self, name) for name in self.FIELDS}
+    @classmethod
+    def fields_for(cls, records) -> list[str]:
+        """Base fields plus any extra field that at least one record actually uses."""
+        extras = [f for f in cls.EXTRA_FIELDS if any(getattr(r, f) is not None for r in records)]
+        return [*cls.FIELDS, *extras]
+
+    def as_dict(self, fields=None) -> dict:
+        return {name: getattr(self, name) for name in (fields or self.FIELDS)}

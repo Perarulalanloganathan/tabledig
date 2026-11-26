@@ -57,6 +57,11 @@ def _build_parser() -> argparse.ArgumentParser:
         default="auto",
         help="decimal mark: auto-detect (default), or force dot (1,234.5) / comma (1.234,5)",
     )
+    ex.add_argument(
+        "--validate", action="store_true", help="check totals/subtotals add up; adds check + confidence"
+    )
+    ex.add_argument("--evidence", action="store_true", help="include the full source row text")
+    ex.add_argument("--explain", action="store_true", help="include runner-up labels that were not chosen")
     ex.add_argument("--password", default=None, help="password for encrypted PDFs")
     ex.add_argument("--no-missing", action="store_true", help="omit attributes that were not found")
     ex.add_argument("-j", "--workers", type=int, default=1, help="parallel processes for many PDFs")
@@ -89,6 +94,9 @@ def _cmd_extract(args: argparse.Namespace) -> int:
         normalize_units=args.normalize_units or bool(settings.get("normalize_units", False)),
         include_missing=not args.no_missing,
         password=args.password,
+        validate=args.validate,
+        evidence=args.evidence,
+        explain=args.explain,
         decimal={"auto": None, "dot": ".", "comma": ","}[args.decimal],
     )
     pdfs = _collect_pdfs(args.paths)

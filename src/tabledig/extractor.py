@@ -12,6 +12,7 @@ from .matcher import score_label
 from .models import Attribute, Record, Table
 from .normalize import parse_number
 from .reader import read_tables
+from .validate import check_tables
 
 DEFAULT_SKIP_COLUMNS = re.compile(
     r"^(?:notes?|note\s*no\.?|ref\.?|sl\.?\s*no\.?|s\.?\s*no\.?|sr\.?\s*no\.?)$", re.IGNORECASE
@@ -28,6 +29,8 @@ class _Candidate:
     table: Table
     label: str
     values: list[tuple[str, str, float]]  # (column, raw, number)
+    row_idx: int = -1
+    row: Optional[list[str]] = None
 
     @property
     def key(self) -> tuple:
@@ -51,6 +54,27 @@ def _describe_error(exc: Exception) -> str:
     return f"{name}: {text}" if text else name
 
 
+def _confidence(score: float, check_status: Optional[str]) -> float:
+    """Heuristic 0-1 confidence: the match score, nudged by what validation found."""
+    base = score / 100.0
+    if check_status == "verified":
+        base = min(1.0, base + 0.1)
+    elif check_status == "partial":
+        base *= 0.85
+    elif check_status == "mismatch":
+        base *= 0.5
+    return round(base, 3)
+
+
+def _alternatives(chosen: _Candidate, candidates: list[_Candidate], limit: int = 3) -> Optional[str]:
+    others = [
+        f"{c.label} ({c.score:.0f}, p.{c.table.page})"
+        for c in candidates
+        if c is not chosen and c.label != chosen.label
+    ]
+    return "; ".join(others[:limit]) or None
+
+
 class Extractor:
     """Find named attributes (row labels) and return their values.
 
@@ -70,6 +94,13 @@ class Extractor:
         Emit a ``not_found`` record for attributes with no match.
     password:
         Password for encrypted PDFs.
+    validate:
+        Check totals/subtotals and balance-sheet identities; adds ``check``, ``check_note`` and a
+        heuristic ``confidence`` to each record.
+    evidence:
+        Add ``row_text`` (the full source row) to each record.
+    explain:
+        Add ``alternatives`` (runner-up labels that were not chosen).
     decimal:
         ``"."`` or ``","`` to force the decimal mark (default: auto-detect, so ``1.234,56`` works).
     """
@@ -84,6 +115,9 @@ class Extractor:
         include_missing: bool = True,
         decimal: Optional[str] = None,
         password: Optional[str] = None,
+        validate: bool = False,
+        evidence: bool = False,
+        explain: bool = False,
         skip_columns: re.Pattern = DEFAULT_SKIP_COLUMNS,
     ) -> None:
         self.attributes = coerce_attributes(attributes)
@@ -93,6 +127,9 @@ class Extractor:
         self.include_missing = include_missing
         self.decimal = decimal
         self.password = password
+        self.validate = validate
+        self.evidence = evidence
+        self.explain = explain
         self.skip_columns = skip_columns
 
     # -- single file --------------------------------------------------------
@@ -103,6 +140,7 @@ class Extractor:
     def extract_tables(self, tables: Iterable[Table], file_name: str = "") -> list[Record]:
         tables = list(tables)
         records: list[Record] = []
+        checks = check_tables(tables) if self.validate else {}
         for attribute in self.attributes:
             candidates = self._candidates(attribute, tables)
             if not candidates:
@@ -110,7 +148,12 @@ class Extractor:
                     records.append(Record(file_name, attribute.name, "not_found"))
                 continue
             for cand in candidates[: self.top_k]:
-                records.extend(self._to_records(file_name, attribute, cand))
+                new = self._to_records(file_name, attribute, cand, checks)
+                if self.explain:
+                    alts = _alternatives(cand, candidates)
+                    for r in new:
+                        r.alternatives = alts
+                records.extend(new)
         return records
 
     # -- internals ----------------------------------------------------------
@@ -120,7 +163,7 @@ class Extractor:
         seen: set[tuple] = set()
 
         for table in tables:
-            for row in table.rows:
+            for row_idx, row in enumerate(table.rows):
                 label, label_idx = _split_row(row)
                 if label is None:
                     continue
@@ -148,14 +191,18 @@ class Extractor:
                 if dedupe in seen:
                     continue
                 seen.add(dedupe)
-                found.append(_Candidate(best_score, best_method, table, label, values))
+                found.append(_Candidate(best_score, best_method, table, label, values, row_idx, row))
 
         found.sort(key=lambda c: c.key, reverse=True)
         return found
 
-    def _to_records(self, file_name: str, attribute: Attribute, cand: _Candidate) -> list[Record]:
+    def _to_records(
+        self, file_name: str, attribute: Attribute, cand: _Candidate, checks: Optional[dict] = None
+    ) -> list[Record]:
         unit = cand.table.unit
         scale = unit.scale if (unit and self.normalize_units) else 1.0
+        check = (checks or {}).get((cand.table.page, cand.table.index, cand.row_idx))
+        confidence = _confidence(cand.score, check.status if check else None) if self.validate else None
         out = []
         for column, raw, number in cand.values:
             out.append(
@@ -172,6 +219,10 @@ class Extractor:
                     score=cand.score,
                     method=cand.method,
                     source=cand.table.source,
+                    confidence=confidence,
+                    check=(check.status if check else "unchecked") if self.validate else None,
+                    check_note=check.note if check else None,
+                    row_text=" | ".join(c for c in (cand.row or []) if c) if self.evidence else None,
                 )
             )
         return out
