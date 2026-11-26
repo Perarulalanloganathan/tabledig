@@ -16,6 +16,8 @@ came from, the page, and how confident the match was.
 
 *The [live demo](https://tabledig.streamlit.app) in action.*
 
+Docs: <https://perarulalanloganathan.github.io/tabledig/> (gallery of real documents, CLI reference, troubleshooting).
+
 ```text
 $ tabledig extract examples/sample_income_statement.pdf \
       --attr "Revenue from operations" --attr "Net profit" --attr "Dividend paid" --wide
