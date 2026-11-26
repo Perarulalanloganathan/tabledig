@@ -129,6 +129,7 @@ class Extractor:
         evidence: bool = False,
         explain: bool = False,
         skip_columns: re.Pattern = DEFAULT_SKIP_COLUMNS,
+        columns: Optional[Sequence[str]] = None,
     ) -> None:
         self.attributes = coerce_attributes(attributes)
         self.min_score = min_score
@@ -143,6 +144,7 @@ class Extractor:
         self.evidence = evidence
         self.explain = explain
         self.skip_columns = skip_columns
+        self.columns = [columns] if isinstance(columns, str) else list(columns or [])
 
     # -- single file --------------------------------------------------------
     def extract_file(self, path: Union[str, Path]) -> list[Record]:
@@ -214,6 +216,8 @@ class Extractor:
                     column = table.header[j] if j < len(table.header) and table.header[j] else f"col_{j + 1}"
                     if self.skip_columns.match(column):
                         continue
+                    if self.columns and not self._column_wanted(column):
+                        continue
                     number = parse_number(row[j], self.decimal)
                     if number is not None:
                         values.append((column, row[j], number))
@@ -228,6 +232,13 @@ class Extractor:
 
         found.sort(key=lambda c: c.key, reverse=True)
         return found
+
+    def _column_wanted(self, column: str) -> bool:
+        """True if ``column`` matches one of the requested column names (word-wise, or fuzzy)."""
+        for wanted in self.columns:
+            if score_label(wanted, column, "contains")[0] >= 90 or score_label(wanted, column)[0] >= 85:
+                return True
+        return False
 
     def _to_records(
         self, file_name: str, attribute: Attribute, cand: _Candidate, checks: Optional[dict] = None

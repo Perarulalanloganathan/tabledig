@@ -44,7 +44,8 @@ Fix the failures we already know about, then the next ones the eval exposes.
 - [x] Value-before-label rows ("327 BALLOTS CAST") and key-value lists (0.5.0).
 - [~] Side-by-side blocks on one page: handled for `label value` pairs (0.5.0). Still to do: true newspaper
   columns of prose and per-column table detection.
-- [ ] Wrapped row labels in borderless tables; multi-row and merged headers.
+- [ ] Wrapped row labels in borderless tables.
+- [x] Multi-row and merged headers (up to three rows); column selection (`--column`).
 - [ ] **Column selection**: ask for "FY 2024" only, or "latest period", instead of every column.
 - [ ] **Section scoping**: "Revenue" *within* "Segment information"; disambiguate repeated labels.
 

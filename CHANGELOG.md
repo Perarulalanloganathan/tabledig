@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Headers: up to three stacked header rows are merged, with merged cells spanning their columns
+  (`2024 Q1 Actual`).
+- New `columns=[...]` option / `--column NAME` flag keeps only matching columns (`Q2 Budget`).
+- Demo: pinned to a release tag (a stale unpinned install broke it) and OCR enabled.
+
 ## 0.5.1
 
 - OCR: `--ocr force` re-reads pages that already have a text layer (e.g. scanner output).

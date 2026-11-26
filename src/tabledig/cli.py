@@ -52,6 +52,12 @@ def _build_parser() -> argparse.ArgumentParser:
     ex.add_argument("--top-k", type=int, help="best-matching rows to keep per attribute (default 1)")
     ex.add_argument("--normalize-units", action="store_true", help="convert lakhs/millions/... to base units")
     ex.add_argument(
+        "--column",
+        action="append",
+        metavar="NAME",
+        help="keep only columns whose header matches NAME, e.g. 'Q2 Budget' (repeatable)",
+    )
+    ex.add_argument(
         "--decimal",
         choices=["auto", "dot", "comma"],
         default="auto",
@@ -105,6 +111,7 @@ def _cmd_extract(args: argparse.Namespace) -> int:
         validate=args.validate,
         evidence=args.evidence,
         explain=args.explain,
+        columns=args.column,
         decimal={"auto": None, "dot": ".", "comma": ","}[args.decimal],
     )
     pdfs = _collect_pdfs(args.paths)

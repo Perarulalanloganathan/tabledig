@@ -36,16 +36,26 @@ def _looks_like_header(row: list[str]) -> bool:
     return not any(_numeric_non_year(c) for c in row)
 
 
-def _merge_header_rows(top: list[str], bottom: list[str]) -> list[str]:
-    width = max(len(top), len(bottom))
-    top = top + [""] * (width - len(top))
-    bottom = bottom + [""] * (width - len(bottom))
-    carried, merged = "", []
-    for t, b in zip(top, bottom):
-        if t:
-            carried = t  # a merged top cell spans the columns to its right
-        parent = t or (carried if b else "")
-        merged.append(" ".join(p for p in (parent, b) if p).strip())
+def _merge_header_rows(*levels: list[str]) -> list[str]:
+    """Combine stacked header rows into one name per column (``2024 Q1 Actual``).
+
+    A merged cell is read as one value followed by blanks, so every row but the last is
+    filled rightwards (first column excepted) before the parts are joined.
+    """
+    width = max(len(r) for r in levels)
+    padded = [list(r) + [""] * (width - len(r)) for r in levels]
+    for row in padded[:-1]:
+        carried = ""
+        for j in range(1, width):
+            carried = row[j] or carried
+            row[j] = carried
+    merged = []
+    for parts in zip(*padded):
+        out: list[str] = []
+        for part in parts:
+            if part and (not out or out[-1] != part):
+                out.append(part)
+        merged.append(" ".join(out))
     return merged
 
 
@@ -81,9 +91,10 @@ def _build_ruled_table(
 
     header: list[str] = []
     if _looks_like_header(rows[0]):
-        header = rows.pop(0)
-        if rows and _looks_like_header(rows[0]):
-            header = _merge_header_rows(header, rows.pop(0))
+        levels = [rows.pop(0)]
+        while rows and len(levels) < 3 and _looks_like_header(rows[0]):
+            levels.append(rows.pop(0))
+        header = _merge_header_rows(*levels) if len(levels) > 1 else levels[0]
     return Table(page=page, index=index, header=header, rows=rows, source="ruled", unit=unit)
 
 

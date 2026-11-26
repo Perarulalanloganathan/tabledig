@@ -90,3 +90,48 @@ def test_title_mentioning_years_does_not_trim_values():
     text = "2011/2012 AND 2012/2013 CROPS\nCOTTON   1,393   886   894   35   498"
     table = _build_text_tables(text, 1, 0, None)[0]
     assert table.rows[0][1:] == ["1,393", "886", "894", "35", "498"]
+
+
+def _ruled_pdf(tmp_path, data, col_x, name="grid.pdf", merges=()):
+    """Draw a ruled grid; ``merges`` = (row, first_col, last_col) spans drawn without inner lines."""
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+
+    path = tmp_path / name
+    t = Table(data, colWidths=col_x)
+    style = [("GRID", (0, 0), (-1, -1), 0.5, "black")]
+    style += [("SPAN", (c0, r), (c1, r)) for r, c0, c1 in merges]
+    t.setStyle(TableStyle(style))
+    SimpleDocTemplate(str(path)).build([t])
+    return str(path)
+
+
+def test_three_row_merged_header(tmp_path):
+    data = [
+        ["", "2024", "", "", ""],
+        ["", "Q1", "", "Q2", ""],
+        ["Item", "Actual", "Budget", "Actual", "Budget"],
+        ["Revenue", "100", "90", "120", "110"],
+        ["Costs", "60", "55", "70", "65"],
+    ]
+    path = _ruled_pdf(tmp_path, data, [90, 70, 70, 70, 70], merges=[(0, 1, 4), (1, 1, 2), (1, 3, 4)])
+    from tabledig import read_tables
+
+    header = read_tables(path)[0].header
+    assert header[1:] == ["2024 Q1 Actual", "2024 Q1 Budget", "2024 Q2 Actual", "2024 Q2 Budget"]
+    vals = [r.value for r in extract(path, ["Revenue"]) if r.status == "found"]
+    assert vals == [100, 90, 120, 110]
+
+
+def test_column_selection_with_merged_header(tmp_path):
+    data = [
+        ["", "2024", "", "", ""],
+        ["", "Q1", "", "Q2", ""],
+        ["Item", "Actual", "Budget", "Actual", "Budget"],
+        ["Revenue", "100", "90", "120", "110"],
+    ]
+    path = _ruled_pdf(tmp_path, data, [90, 70, 70, 70, 70], merges=[(0, 1, 4), (1, 1, 2), (1, 3, 4)])
+    recs = extract(path, ["Revenue"], columns=["Q2 Budget"])
+    got = {r.column: r.value for r in recs if r.status == "found"}
+    assert got == {"2024 Q2 Budget": 110}
+    both = [r.value for r in extract(path, ["Revenue"], columns=["Q1"]) if r.status == "found"]
+    assert both == [100, 90]
