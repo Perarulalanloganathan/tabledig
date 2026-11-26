@@ -128,3 +128,18 @@ def detect_unit(text: str) -> Optional[Unit]:
             if word in _UNIT_SCALES:
                 return Unit(_UNIT_NAMES[word], _UNIT_SCALES[word])
     return None
+
+
+_RANGE_LABEL = re.compile(
+    r"^(?:[<>\u2264\u2265]\s*)?\d[\d,.]*\s*(?:[-\u2013\u2014]\s*\d[\d,.]*|\+)\s*\S*$|^[<>\u2264\u2265]\s*\d[\d,.]*$"
+)
+
+
+def is_labelish(text: str) -> bool:
+    """True if a cell can name a row: it has letters, or it is a range/band such as ``12-19`` or ``65+``."""
+    text = str(text).strip()
+    if not text:
+        return False
+    if any(ch.isalpha() for ch in text):
+        return True
+    return bool(_RANGE_LABEL.match(text)) and parse_number(text) is None

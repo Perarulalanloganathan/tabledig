@@ -19,9 +19,9 @@ table-style PDFs**: small, deterministic, honest about its mistakes.
 
 ## How we know we are "best in segment"
 
-| Metric | Today (v0.4.0) | v1.0 target |
+| Metric | Today (v0.5.0) | v1.0 target |
 |---|---|---|
-| Real-PDF eval cases | 19 (17 pass) | 100+, >= 90% pass |
+| Real-PDF eval cases | 36 (36 pass; blind first runs 43% and 78%) | 100+, >= 90% pass |
 | Document types covered | statements, invoices, government/lab/sports tables | + scans, multi-column, merged-header tables |
 | Wrong value returned without a warning | not measured | < 2% of returned values (measured) |
 | Published head-to-head vs raw pdfplumber / Camelot + hand-written lookup | none | yes, fair methodology, reproducible |
@@ -41,8 +41,9 @@ The feature no free library does well: *tell the user when to doubt a value.*
 
 ### v0.5 - Layout coverage
 Fix the failures we already know about, then the next ones the eval exposes.
-- [ ] Value-before-label rows ("327 BALLOTS CAST") and key-value lists.
-- [ ] Multi-column / newspaper layouts (split the page into columns before reading rows).
+- [x] Value-before-label rows ("327 BALLOTS CAST") and key-value lists (0.5.0).
+- [~] Side-by-side blocks on one page: handled for `label value` pairs (0.5.0). Still to do: true newspaper
+  columns of prose and per-column table detection.
 - [ ] Wrapped row labels in borderless tables; multi-row and merged headers.
 - [ ] **Column selection**: ask for "FY 2024" only, or "latest period", instead of every column.
 - [ ] **Section scoping**: "Revenue" *within* "Segment information"; disambiguate repeated labels.

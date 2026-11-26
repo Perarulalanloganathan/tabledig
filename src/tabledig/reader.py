@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 from .models import Table, Unit
-from .normalize import detect_unit, is_year_like, parse_number
+from .normalize import detect_unit, is_labelish, is_year_like, parse_number
 
 _HEADER_TOKEN = re.compile(r"(?:19|20)\d{2}|FY\s?\d{2}", re.IGNORECASE)
 _HAS_LETTERS = re.compile(r"[^\W\d_]")
@@ -114,6 +114,93 @@ def _period_header(line: str) -> list[str]:
     return [] if re.search(r"\d", rest) else found
 
 
+_LEADERS = re.compile(r"(?:\s?\.){3,}|\u2026+|\.{3,}")
+
+
+def _strip_leaders(line: str) -> str:
+    """Replace dot leaders ("Total ........ 5") by a wide gap so they act as column separators.
+
+    Also closes stray spaces inside bracketed negatives: ``( 498,5)`` -> ``(498,5)``.
+    """
+    line = _LEADERS.sub("  ", line)
+    line = re.sub(r"\(\s+(?=[\d$\u20ac\u00a3])", "(", line)
+    return re.sub(r"(?<=\d)\s+\)", ")", line)
+
+
+def _last_number(segment: str) -> Optional[str]:
+    """Last numeric token of a segment ("Up to $3,790." -> "$3,790"), else None."""
+    tokens = segment.split()
+    while tokens:
+        token = tokens[-1].rstrip(".,;:")
+        if parse_number(token) is not None and not is_year_like(token):
+            return token
+        if parse_number(token) is not None:
+            return token
+        return None
+    return None
+
+
+def _kv_rows(text: str) -> list[list[str]]:
+    """Key-value style rows from layout text: ``label value`` and ``value label`` pairs.
+
+    Lines are cut into segments at runs of two or more spaces (side-by-side blocks, forms, dot-leader
+    tables). Within a line, every label starts a block that collects the numbers that follow it, so
+    ``Presentes 217 0 217   Votos Afirmativos 129 0 0 129`` yields two rows. A number placed *before*
+    its label (``327 BALLOTS CAST``) is attached to that label.
+    """
+    rows: list[list[str]] = []
+    for raw in text.splitlines():
+        segments = [g for g in re.split(r"\s{2,}", _strip_leaders(raw).strip()) if g]
+        if not segments:
+            continue
+
+        # dot-leader table row: a label, then segments that each END in a number ("Up to $3,790")
+        first = segments[0].split()
+        label_only = (
+            len(segments) > 1
+            and bool(_LEADERS.search(raw))
+            and is_labelish(segments[0])
+            and parse_number(first[0]) is None
+            and _last_number(segments[0]) is None
+        )
+        if label_only:
+            values = [_last_number(seg) for seg in segments[1:]]
+            if all(values):
+                rows.append([segments[0], *values])
+                continue
+
+        blocks: list[tuple[str, list[str]]] = []
+        pending: list[str] = []  # numbers seen before any label on this line
+        for seg in segments:
+            tokens = seg.split()
+            i = 0
+            leading: list[str] = []
+            while i < len(tokens) and parse_number(tokens[i].rstrip(".,;:")) is not None:
+                leading.append(tokens[i].rstrip(".,;:"))
+                i += 1
+            rest = tokens[i:]
+            if leading and blocks:
+                blocks[-1][1].extend(leading)
+                leading = []
+            if not rest:
+                continue
+            if not blocks and leading:
+                pending = leading  # value-before-label
+            j = len(rest)
+            while j > 0 and parse_number(rest[j - 1].rstrip(".,;:")) is not None:
+                j -= 1
+            label_tokens = rest[:j] if j else rest
+            tail = [t.rstrip(".,;:") for t in rest[j:]]
+            if not any(is_labelish(t) for t in label_tokens):
+                if blocks:
+                    blocks[-1][1].extend(tail)
+                continue
+            blocks.append((" ".join(label_tokens), pending + tail))
+            pending = []
+        rows.extend([label, *values] for label, values in blocks if values)
+    return rows
+
+
 def _build_text_tables(
     text: str, page: int, start_index: int, unit: Optional[Unit]
 ) -> list[Table]:
@@ -124,12 +211,24 @@ def _build_text_tables(
     def flush() -> None:
         nonlocal current_rows, current_header
         if current_rows:
-            width = len(current_header) or max(len(v) for _, v in current_rows)
+            widest = max(len(v) for _, v in current_rows)
+            width = len(current_header) or widest
+            header_cols = list(current_header)
+            if current_header:
+                # several values per period ("2001 Mill., Part.")? keep them all instead of trimming
+                groups = [len(v) // width for _, v in current_rows if len(v) > width and len(v) % width == 0]
+                if groups:
+                    header_cols = current_header * max(groups)
+                    width = len(header_cols)
+                elif widest - width > 2:
+                    # far more values than header labels (a title that mentions two years, say): the
+                    # "header" does not describe these columns, so keep every value, generic names
+                    header_cols, width = [], widest
             rows = []
             for label, values in current_rows:
-                values = values[-width:] if current_header else values
+                values = values[-width:] if header_cols or current_header else values
                 rows.append([label] + [""] * (width - len(values)) + values)
-            header = [""] + current_header if current_header else []
+            header = [""] + header_cols if header_cols else []
             tables.append(
                 Table(
                     page=page,
@@ -143,6 +242,7 @@ def _build_text_tables(
         current_rows, current_header = [], []
 
     for line in text.splitlines():
+        line = _strip_leaders(line)
         period = _period_header(line)
         if period:
             flush()
@@ -155,7 +255,7 @@ def _build_text_tables(
             flush()  # a header such as "Particulars  2024  2023"
             current_header = tail
             continue
-        if not _HAS_LETTERS.search(label):
+        if not is_labelish(label):
             continue
         current_rows.append((label, tail))
     flush()
@@ -179,11 +279,21 @@ def _good_rows(tables: list[Table]) -> int:
     for table in tables:
         for row in table.rows:
             label_idx = next(
-                (i for i, c in enumerate(row) if _HAS_LETTERS.search(c) and parse_number(c) is None), -1
+                (i for i, c in enumerate(row) if is_labelish(c) and parse_number(c) is None), -1
             )
             if label_idx >= 0 and any(parse_number(c) is not None for c in row[label_idx + 1 :]):
                 count += 1
     return count
+
+
+def _has_mega_cell(tables: list[Table], numbers: int = 8) -> bool:
+    """A cell holding many numbers is a whole text block mis-detected as one table cell."""
+    return any(
+        sum(parse_number(tok) is not None for tok in cell.split()) >= numbers
+        for table in tables
+        for row in table.rows
+        for cell in row
+    )
 
 
 def _width(table: Table) -> int:
@@ -198,12 +308,16 @@ def read_tables(
     ocr: object = "auto",
     ocr_lang: str = "eng",
     report: Optional[list[str]] = None,
+    key_values: bool = False,
 ) -> list[Table]:
     """Return every table found in ``path`` (all pages).
 
     Pages with no text layer (scans) are read with OCR when ``ocr`` is ``"auto"`` (the default, used
     only if the optional OCR extra and Tesseract are installed) or ``"on"`` (error if unavailable);
     ``"off"`` disables it. Human-readable problems are appended to ``report``.
+
+    With ``key_values=True`` one extra table per page (``source == "kv"``) holds ``label value`` /
+    ``value label`` pairs found on side-by-side segments; the extractor uses it as a last resort.
 
     A ruled table with no header inherits the previous page's header when the column counts
     match (long tables usually print the header only once). Pages whose ruled tables hold
@@ -240,7 +354,7 @@ def read_tables(
                         table.header = list(previous.header)
                     built.append(table)
 
-            if text_fallback and _good_rows(built) < 2:
+            if text_fallback and (_good_rows(built) < 2 or _has_mega_cell(built)):
                 fresh = _build_text_tables(text, page.page_number, len(tables) + len(built), unit)
                 if used_ocr:
                     for table in fresh:
@@ -248,6 +362,23 @@ def read_tables(
                 built.extend(fresh)
             for table in built:
                 table.header = _unique_header(table.header)
+            if key_values and text.strip():
+                try:
+                    layout = text if used_ocr else (page.extract_text(layout=True) or text)
+                except Exception:  # layout mode is best-effort
+                    layout = text
+                kv = _kv_rows(layout)
+                if kv:
+                    built.append(
+                        Table(
+                            page=page.page_number,
+                            index=len(tables) + len(built),
+                            header=[],
+                            rows=kv,
+                            source="kv",
+                            unit=unit,
+                        )
+                    )
             tables.extend(built)
             ruled = [t for t in built if t.source == "ruled" and t.rows]
             if ruled:

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0
+- **Key-value fallback** (`source = kv`): value-before-label rows, several blocks on one line / side-by-side
+  page columns, dot-leader rows with qualifiers like "Up to $3,790". Used only when no real table row matches.
+- Row labels can be ranges/bands (`12-19`, `65+`, `<18`) instead of requiring letters.
+- Text tables: a cell-sized block of text mis-detected as one table cell no longer suppresses the page's
+  text fallback; several values per period (`2001 Mill. | Part.`) are kept; a title that mentions two years
+  is no longer mistaken for a 2-column header (it used to cut values); `( 498,5)` negatives with inner spaces.
+- Real-PDF evaluation now spans three pinned corpora, 36 cases, with honestly reported blind first-run scores.
+
 ## 0.4.0
 - **Validation** (`--validate` / `validate=True`): checks that Total/Subtotal rows equal the rows above and
   that total assets equal total equity and liabilities; joins tables continuing across pages; skips

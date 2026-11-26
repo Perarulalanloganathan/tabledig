@@ -170,6 +170,17 @@ tabledig extract report.pdf --attr "Total income" --attr "Revenue" --validate --
 
 On the real PDFs in the evaluation, the totals of a 22-column table and of a 16-page report both verify.
 
+## Beyond plain tables
+
+If a row is not in any detected table, tabledig falls back to **key-value reading** of the page text:
+- a number printed *before* its label (`327 BALLOTS CAST`);
+- several blocks side by side on one line or page column (`Presentes 217 0 217   Votos Afirmativos 129 ...`);
+- dot-leader rows (`Stabilizer wiring change ........ Up to $3,790 ...... Up to $766,865.`).
+
+Real tables always win; these rows are used only when nothing else matches, are marked `source = kv`, and
+get a slightly lower confidence. Row labels may also be ranges or bands such as `12-19` or `65+`, and
+European numbers (`1.393,4`, `(35,8)`) are understood.
+
 ## Scanned PDFs (OCR)
 
 ```bash
@@ -226,12 +237,22 @@ Streamlit demo and `benchmarks/` the benchmark.
 
 ## Real-PDF evaluation
 
-`python benchmarks/real_eval.py` runs 19 hand-checked cases on public PDFs (downloaded at a pinned
-commit from the MIT-licensed [pdfplumber](https://github.com/jsvine/pdfplumber) test suite, not stored
-here): firearm background checks, California layoff notices, a Chinese balance sheet, a Chinese
-engineering standard, bank loan rates and figure-skating scores. Expected values were read off the printed
-pages. **Current result: 17/19 pass.** The two failures are kept in the score on purpose: a value printed
-*before* its label ("327 BALLOTS CAST") and a newspaper-style multi-column layout.
+`python benchmarks/real_eval.py` runs 36 hand-checked cases on real public PDFs from three MIT-licensed
+test suites ([pdfplumber](https://github.com/jsvine/pdfplumber), [Camelot](https://github.com/camelot-dev/camelot),
+[tabula-java](https://github.com/tabulapdf/tabula-java)), fetched at pinned commits and not stored here:
+firearm background checks, layoff notices, Chinese balance sheets, US/EU government statistics, crime
+tables, loan rates, voting records. Expected values were read off the printed pages, not produced by tabledig.
+
+| Group | Cases | Passing now | How it was built |
+| --- | ---: | ---: | --- |
+| tuned | 20 | 20 | the first documents I studied; code was fixed against them |
+| held-out round 1 | 7 | 7 | random draw; **first blind run: 3/7**, failures then fixed |
+| held-out round 2 | 9 | 9 | fresh random draw, answers written before running; **first blind run: 7/9**, then fixed |
+
+Read this honestly: the "passing now" column is flattered by the fixes made after looking. The blind
+first-run scores (43% and 78%) are the better guide to how a *new* document will go, and they improved as
+the failure classes were fixed. Across all 276 PDFs in the Camelot and Tabula suites, asking for 3
+attributes that do not exist produced **0 false matches in 822 checks**, at about 0.2 s per PDF.
 
 ## Tested beyond finance
 
@@ -246,7 +267,7 @@ in this repository.
 ## Limitations
 
 - Scanned PDFs need the optional OCR extra and Tesseract (see above); accuracy on real noisy scans is untested.
-- Borderless tables without a year-style header get generic column names (`col_2`, `col_3`...).
+- Borderless tables without a recognisable header get generic column names (`col_2`, `col_3`...).
 - Wrapped row labels that span two lines are not joined yet.
 - PDFs whose text layer has no spaces between words (some government exports) cannot be matched by label.
 - Matching is lexical; it will not know that "turnover" means "revenue" unless you add an alias.

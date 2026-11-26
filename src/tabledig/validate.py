@@ -156,7 +156,7 @@ def check_tables(tables: list[Table]) -> dict[tuple[int, int, int], Check]:
     asset_rows: list[tuple[tuple[int, int, int], dict[int, float]]] = []
     liability_rows: list[tuple[tuple[int, int, int], dict[int, float]]] = []
 
-    for group in _logical_tables(tables):
+    for group in _logical_tables([t for t in tables if t.source != "kv"]):
         rows_text: list[list[str]] = []
         origin: list[tuple[int, int, int]] = []
         for table in group:

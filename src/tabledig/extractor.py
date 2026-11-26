@@ -10,7 +10,7 @@ from typing import Iterable, Optional, Sequence, Union
 from .config import coerce_attributes
 from .matcher import score_label
 from .models import Attribute, Record, Table
-from .normalize import parse_number
+from .normalize import is_labelish, parse_number
 from .reader import read_tables
 from .validate import check_tables
 
@@ -41,7 +41,7 @@ class _Candidate:
 def _split_row(row: list[str]) -> tuple[Optional[str], int]:
     """Return (label, index of label cell). The label is the first text cell."""
     for i, cell in enumerate(row):
-        if _HAS_LETTERS.search(cell) and parse_number(cell) is None:
+        if is_labelish(cell) and parse_number(cell) is None:
             return cell, i
     return None, -1
 
@@ -57,8 +57,8 @@ def _describe_error(exc: Exception) -> str:
 def _confidence(score: float, check_status: Optional[str], source: Optional[str] = None) -> float:
     """Heuristic 0-1 confidence: the match score, nudged by what validation found."""
     base = score / 100.0
-    if source == "ocr":
-        base *= 0.9  # OCR can misread digits
+    if source in ("ocr", "kv"):
+        base *= 0.9  # OCR can misread digits; key-value rows have no table structure to confirm them
     if check_status == "verified":
         base = min(1.0, base + 0.1)
     elif check_status == "partial":
@@ -147,7 +147,12 @@ class Extractor:
     def extract_file(self, path: Union[str, Path]) -> list[Record]:
         report: list[str] = []
         tables = read_tables(
-            path, password=self.password, ocr=self.ocr, ocr_lang=self.ocr_lang, report=report
+            path,
+            password=self.password,
+            ocr=self.ocr,
+            ocr_lang=self.ocr_lang,
+            report=report,
+            key_values=True,
         )
         records = self.extract_tables(tables, Path(path).name)
         if report:
@@ -177,6 +182,14 @@ class Extractor:
 
     # -- internals ----------------------------------------------------------
     def _candidates(self, attribute: Attribute, tables: list[Table]) -> list[_Candidate]:
+        """Best-first candidates; key-value rows are consulted only when real tables have no match."""
+        real = [t for t in tables if t.source != "kv"]
+        found = self._scan(attribute, real)
+        if not found:
+            found = self._scan(attribute, [t for t in tables if t.source == "kv"])
+        return found
+
+    def _scan(self, attribute: Attribute, tables: list[Table]) -> list[_Candidate]:
         threshold = attribute.min_score if attribute.min_score is not None else self.min_score
         found: list[_Candidate] = []
         seen: set[tuple] = set()

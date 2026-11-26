@@ -43,7 +43,7 @@ def load_tables(data: bytes):
     with tempfile.TemporaryDirectory() as folder:
         path = Path(folder) / "upload.pdf"
         path.write_bytes(data)
-        return read_tables(path)
+        return read_tables(path, key_values=True)
 
 
 def table_to_frame(table) -> pd.DataFrame:
@@ -141,7 +141,8 @@ found = {r.attribute for r in records if r.status == "found"}
 missing = [a.name for a in attributes if a.name not in found]
 
 c1, c2, c3 = st.columns(3)
-c1.metric("Tables detected", len(tables))
+shown = [t for t in tables if t.source != "kv"]  # key-value rows are a hidden fallback
+c1.metric("Tables detected", len(shown))
 c2.metric("Attributes found", f"{len(found)} / {len(attributes)}")
 c3.metric("Not found", len(missing))
 
@@ -174,7 +175,7 @@ with tab_results:
 
 with tab_tables:
     st.caption("Every table tabledig found. Use the exact row labels here as attribute names or aliases.")
-    for table in tables:
+    for table in shown:
         unit = f" · unit: {table.unit.name}" if table.unit else ""
         with st.expander(f"Page {table.page} · table {table.index} · {table.source}{unit}", expanded=False):
             st.dataframe(table_to_frame(table), use_container_width=True, hide_index=True)
