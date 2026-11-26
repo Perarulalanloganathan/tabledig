@@ -44,3 +44,14 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
       - run: python benchmarks/real_eval.py
+
+  real-scan-eval:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
+      - run: pip install -e ".[dev]"
+      - run: python benchmarks/scan_eval.py

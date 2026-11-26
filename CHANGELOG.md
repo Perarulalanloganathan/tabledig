@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0
+
+- `benchmarks/scan_eval.py`: OCR evaluated on 19 real scanned receipts (CC0, pinned commit, not stored
+  in the repo), hand-read expected totals, run in CI. Forced OCR 16/19 (tuned 10/12, held-out 6/7) vs 9/19
+  from the scanners' own text layers. Known misses: a garbled digit, white-on-black print, and a
+  "Sub Total" vs "Order Total" tie (both score alike for the query "Total").
+
 ## 0.5.2
 
 - Headers: up to three stacked header rows are merged, with merged cells spanning their columns

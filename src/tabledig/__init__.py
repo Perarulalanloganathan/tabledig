@@ -5,7 +5,7 @@ from .models import Attribute, Record, Table, Unit
 from .output import to_dataframe, write_records
 from .reader import read_tables
 
-__version__ = "0.5.2"
+__version__ = "0.6.0"
 
 __all__ = [
     "Attribute",

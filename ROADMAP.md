@@ -53,7 +53,7 @@ Fix the failures we already know about, then the next ones the eval exposes.
 - [x] Optional `tabledig[ocr]` extra (Tesseract; shipped in 0.4.0, pulled forward). Same API; OCR confidence feeds the value
   confidence. Clear warning when a page has no text layer instead of silent `not_found`.
 - [~] Table structure for images (lines and whitespace) with the same evidence output.
-- [ ] 10+ *real* scanned cases in the eval, tracked separately (current OCR tests use synthetic scans).
+- [x] 10+ *real* scanned cases in the eval, tracked separately (`benchmarks/scan_eval.py`, 19 receipts, 0.6.0).
 
 ### v0.7 - Smarter matching
 - [ ] Built-in **synonym packs** (finance, healthcare labs, sports, government) as plain YAML, user-extensible.
