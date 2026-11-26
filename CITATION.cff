@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use tabledig in research, please cite it as below."
+title: "tabledig: find named attributes in table-style PDFs and say when to doubt them"
+type: software
+license: MIT
+repository-code: "https://github.com/Perarulalanloganathan/tabledig"
+url: "https://perarulalanloganathan.github.io/tabledig/"
+authors:
+  - alias: Perarulalanloganathan
+version: 0.10.0
+date-released: "2026-11-26"
+keywords: [pdf, tables, information-extraction, ocr, validation]

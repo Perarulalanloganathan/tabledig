@@ -9,5 +9,6 @@ nav:
   - Command line: cli.md
   - Fallback resolvers: fallback.md
   - Troubleshooting: troubleshooting.md
+  - Versioning policy: policy.md
   - Roadmap: roadmap.md
   - Changelog: changelog.md

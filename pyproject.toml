@@ -13,6 +13,12 @@ authors = [{ name = "Perarulalan L" }]
 keywords = ["pdf", "table-extraction", "data-extraction", "pdfplumber", "financial-statements"]
 classifiers = [
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "License :: OSI Approved :: MIT License",
   "Topic :: Text Processing",
   "Intended Audience :: Developers",
@@ -33,6 +39,7 @@ dev = ["pytest>=7", "reportlab>=4", "ruff>=0.4", "mypy>=1.8", "types-PyYAML", "s
 
 [project.urls]
 Homepage = "https://github.com/Perarulalanloganathan/tabledig"
+Documentation = "https://perarulalanloganathan.github.io/tabledig/"
 Issues = "https://github.com/Perarulalanloganathan/tabledig/issues"
 Changelog = "https://github.com/Perarulalanloganathan/tabledig/blob/main/CHANGELOG.md"
 
