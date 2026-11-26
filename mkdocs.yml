@@ -8,6 +8,7 @@ nav:
   - Gallery: gallery.md
   - Command line: cli.md
   - Fallback resolvers: fallback.md
+  - Head-to-head benchmark: benchmark.md
   - Troubleshooting: troubleshooting.md
   - Versioning policy: policy.md
   - Roadmap: roadmap.md

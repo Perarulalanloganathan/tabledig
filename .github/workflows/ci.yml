@@ -80,6 +80,18 @@ jobs:
       - run: python benchmarks/semantic_eval.py | tee semantic.txt
       - run: cat semantic.txt >> "$GITHUB_STEP_SUMMARY"
 
+  head-to-head:
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]" camelot-py
+      - run: python benchmarks/head_to_head.py | tee h2h.txt
+      - run: cat h2h.txt >> "$GITHUB_STEP_SUMMARY"
+
   calibration:
     runs-on: ubuntu-24.04
     continue-on-error: true

@@ -69,11 +69,11 @@ Fix the failures we already know about, then the next ones the eval exposes.
 - [x] Optional LLM fallback hook (0.10.0) (bring-your-own model) for rows the rules cannot resolve, always marked as such.
 
 ### v1.0 - Credible and stable
-- [ ] Published on **PyPI** with trusted publishing from CI.
-- [ ] Real eval >= 100 cases, >= 90% pass; synthetic benchmark retained as a regression guard.
-- [ ] Public head-to-head write-up (method, data, code) against raw pdfplumber/Camelot + hand-written lookup.
-- [ ] Semantic versioning promise, deprecation policy, security policy, citation file.
-- [ ] Windows, macOS, Linux and Python 3.9-3.14 green in CI (Windows/macOS already added).
+- [~] Published on **PyPI** (workflow ready; needs the PyPI project registered, see publish.yml) with trusted publishing from CI.
+- [x] Real eval >= 100 cases, >= 90% pass (100 cases, 97 pass; 1.0.0); synthetic benchmark retained as a regression guard.
+- [x] Public head-to-head write-up (docs/benchmark.md, 1.0.0) (method, data, code) against raw pdfplumber/Camelot + hand-written lookup.
+- [x] Semantic versioning promise, deprecation policy, security policy, citation file (1.0.0).
+- [x] Windows, macOS, Linux and Python 3.9-3.14 green in CI.
 
 ## Non-goals
 - Not a general PDF-to-Markdown converter or layout-analysis toolkit (use Docling or pdfplumber for that).

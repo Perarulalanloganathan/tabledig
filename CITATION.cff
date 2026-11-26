@@ -7,6 +7,6 @@ repository-code: "https://github.com/Perarulalanloganathan/tabledig"
 url: "https://perarulalanloganathan.github.io/tabledig/"
 authors:
   - alias: Perarulalanloganathan
-version: 0.10.0
+version: 1.0.0
 date-released: "2026-11-26"
 keywords: [pdf, tables, information-extraction, ocr, validation]

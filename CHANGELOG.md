@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.0
+
+First stable release. From here the public API, CLI flags and JSON schema version 1 follow semantic
+versioning (see docs/policy.md).
+
+- **Evaluation grown to 100 real cases** (81 PDF + 19 scanned receipts), 97 passing; first blind runs on the
+  later held-out rounds were 17/21 and 24/24. Run in CI.
+- Fixed from the round-3 blind run: list numbers before labels ("4. Atomic Energy") and trailing page
+  references ("20-25") broke rows in borderless tables.
+- **Head-to-head write-up** (docs/benchmark.md, `benchmarks/head_to_head.py`) against pdfplumber and Camelot
+  lookups, with its caveats: on held-out cases the simple text-line baseline reached 90%, Camelot 82%.
+- Policies: SECURITY.md, CITATION.cff, versioning/deprecation policy. CI covers Python 3.9-3.14 on Linux,
+  Windows and macOS.
+- PyPI trusted-publishing workflow added; it activates once the PyPI project is registered (repository
+  variable `PYPI=on`).
+
 ## 0.10.0
 
 - **Fallback resolvers**: `fallback=` hook for rows the lexical matcher cannot find. Built-in

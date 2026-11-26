@@ -220,6 +220,10 @@ def _kv_rows(text: str) -> list[list[str]]:
     return rows
 
 
+_PAGE_REF = re.compile(r"(?<=\d)\s+\d{1,3}-\d{1,3}\s*$")  # trailing "20-25" page reference after numbers
+_ENUMERATOR = re.compile(r"^\s*\d{1,3}[.)]\s+(?=[^\W\d_])")  # "4. Atomic Energy" -> "Atomic Energy"
+
+
 def _build_text_tables(
     text: str, page: int, start_index: int, unit: Optional[Unit]
 ) -> list[Table]:
@@ -266,7 +270,9 @@ def _build_text_tables(
         current_rows, current_header, current_sections = [], [], []
 
     for line in text.splitlines():
-        line = _strip_leaders(line)
+        line = _ENUMERATOR.sub("", _strip_leaders(line))
+        if len(re.findall(r"\d[\d,.]*\s", line)) >= 3:
+            line = _PAGE_REF.sub("", line)
         period = _period_header(line)
         if period:
             flush()

@@ -210,3 +210,16 @@ def test_label_number_table_is_not_split_into_columns(tmp_path):
 
     with pdfplumber.open(path) as pdf:
         assert _split_columns(pdf.pages[0]) is None
+
+
+def test_numbered_rows_with_page_reference(tmp_path):
+    path = _pdf(
+        tmp_path,
+        [
+            (50, 780, "Ministry   Revenue   Capital   Total   Page"),
+            (50, 765, "4. Atomic Energy   1483.00   3427.00   4910.00   20-25"),
+            (50, 750, "5. Nuclear Power Schemes   296.00   674.00   970.00   26-27"),
+        ],
+    )
+    got = [r.value for r in extract(path, ["Nuclear Power Schemes"]) if r.status == "found"]
+    assert got == [296.0, 674.0, 970.0]

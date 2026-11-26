@@ -114,6 +114,61 @@ CASES: list[dict] = [
      "expect": [5429665, 559270], "opts": {"min_score": 90}},
 ]
 
+# ---- held-out round 3: three fresh documents, expected values read from `pdftotext -layout` BEFORE running ----
+_US018 = "icdar2013-dataset/competition-dataset-us/us-018.pdf"  # graduates by state, ten school years
+_R3 = [
+    ("tabula", _US018, "Connecticut", [34573, 35515, 36222, 37541, 38419, 34968]),
+    ("tabula", _US018, "Maine", [13278, 13077, 12950, 13151, 14350, 14093]),
+    ("tabula", _US018, "Georgia", [68550, 70834, 73498, 77829, 83505, 88003]),
+    ("tabula", _US018, "Alabama", [36464, 37453, 37918, 38912, 41346, 42082]),
+    ("tabula", _US018, "Indiana", [56008, 55444, 57920, 59887, 61901, 63663]),
+    ("tabula", _US018, "Wisconsin", [62784, 63229, 63003, 63968, 65183, 65410]),
+    ("tabula", _US018, "New Jersey", [83826, 86502, 90049, 93013, 94994, 95085]),
+    ("tabula", _US018, "Delaware", [6951, 6934, 7275, 7205, 7388, 7839]),
+    ("camelot", "stream/population_growth/population_growth.pdf", "Assam", [34.98, 34.95, 23.36, 24.24, 18.92, 16.93]),
+    ("camelot", "stream/population_growth/population_growth.pdf", "Bihar", [19.79, 20.91, 24.16, 23.38, 28.62, 25.07]),
+    ("camelot", "stream/population_growth/population_growth.pdf", "Chandigarh", [394.13, 114.59, 75.55, 42.16, 40.28, 17.10]),
+    ("camelot", "stream/population_growth/population_growth.pdf", "NCT of Delhi", [52.44, 52.93, 53.00, 51.45, 47.02, 20.96]),
+    ("camelot", "stream/population_growth/population_growth.pdf", "Daman and Diu", [-24.56, 70.85, 26.07, 28.62, 55.73, 53.54]),
+    ("camelot", "stream/population_growth/population_growth.pdf", "Chhattisgarh", [22.77, 27.12, 20.39, 25.73, 18.27, 22.59]),
+    ("camelot", "stream/population_growth/population_growth.pdf", "Andhra Pradesh", [15.65, 20.90, 23.10, 24.20, 14.59, 11.10]),
+    ("camelot", "stream/population_growth/population_growth.pdf", "Arunachal Pradesh", [0, 38.91, 35.15, 36.83, 27.00, 25.92]),
+    ("camelot", "stream/budget/budget.pdf", "DEPARTMENT OF ATOMIC ENERGY", [1779.00, 4101.00, 5880.00]),
+    ("camelot", "stream/budget/budget.pdf", "Atomic Energy", [1483.00, 3427.00, 4910.00]),
+    ("camelot", "stream/budget/budget.pdf", "Nuclear Power Schemes", [296.00, 674.00, 970.00]),
+    ("camelot", "stream/budget/budget.pdf", "Department of Agriculture and Cooperation", [22260.55, 48.45, 22309.00]),
+    ("camelot", "stream/budget/budget.pdf", "Department of Animal Husbandry, Dairying and Fisheries", [2154.93, 19.07, 2174.00]),
+    # ---- round 4: same method, further rows and three more documents (health, twotables_2, budget) ----
+    ("tabula", _US018, "Illinois", [124763, 123615, 126817, 130220, 135143, 131670]),
+    ("tabula", _US018, "Florida", [131418, 133318, 134686, 142284, 149046, 153461]),
+    ("tabula", _US018, "Ohio", [119029, 116702, 117356, 117658, 120758, 122203]),
+    ("tabula", _US018, "Minnesota", [59096, 58391, 58898, 59497, 60409, 59729]),
+    ("tabula", _US018, "Massachusetts", [58326, 59665, 61272, 63903, 65197, 65258]),
+    ("tabula", _US018, "Kentucky", [37787, 38399, 38449, 39099, 39339, 41851]),
+    ("tabula", _US018, "Louisiana", [37019, 36009, 33275, 34274, 34401, 35622]),
+    ("tabula", _US018, "Maryland", [52870, 54170, 55536, 57564, 59171, 58304]),
+    ("tabula", _US018, "Mississippi", [23735, 23523, 23848, 24186, 24795, 24505]),
+    ("tabula", _US018, "North Carolina", [72126, 75010, 76710, 76031, 83307, 86712]),
+    ("camelot", "stream/health/health.pdf", "Andhra Pradesh", [47824589, 9967837, 1275000, 15000, 59082426, 14898243, 73980669]),
+    ("camelot", "stream/health/health.pdf", "Arunachal Pradesh", [2241609, 107549, 23000, 0, 2372158, 86336, 2458494]),
+    ("camelot", "stream/health/health.pdf", "Assam", [14874821, 2554197, 161600, 0, 17590618, 4408505, 21999123]),
+    ("camelot", "stream/health/health.pdf", "Bihar", [21016708, 4332141, 5329000, 0, 30677849, 2251571, 32929420]),
+    ("camelot", "lattice/twotables_2/twotables_2.pdf", "Kerala", [2400, 7.2, 0.5, 25.3, 20.1, 41.5, 5.5]),
+    ("camelot", "lattice/twotables_2/twotables_2.pdf", "Tamil Nadu", [2400, 21.4, 2.3, 8.8, 35.5, 25.8, 6.2]),
+    ("camelot", "lattice/twotables_2/twotables_2.pdf", "Karnataka", [2399, 37.4, 2.8, 12.5, 18.3, 23.1, 5.8]),
+    ("camelot", "lattice/twotables_2/twotables_2.pdf", "Maharashtra", [2400, 22.0, 0.9, 17.3, 20.3, 32.6, 7.0]),
+    ("camelot", "lattice/twotables_2/twotables_2.pdf", "Gujarat", [2390, 28.6, 0.1, 14.4, 23.1, 26.9, 6.8]),
+    ("camelot", "stream/budget/budget.pdf", "MINISTRY OF AGRICULTURE", [28130.48, 67.52, 28198.00, 2863.09]),
+    ("camelot", "stream/budget/budget.pdf", "MINISTRY OF CORPORATE AFFAIRS", [22.76, 1.24, 24.00, 208.75, 22.50, 231.25, 255.25]),
+    ("camelot", "stream/budget/budget.pdf", "MINISTRY OF COMMUNICATIONS AND INFORMATION TECHNOLOGY", [7704.70, 4410.30, 12115.00, 13953.92, 101.00, 14054.92, 26169.92]),
+    ("camelot", "stream/population_growth/population_growth.pdf", "Andaman and Nicobar Islands", [105.19, 81.17, 63.93, 48.70, 26.90, 6.68]),
+    ("camelot", "stream/population_growth/population_growth.pdf", "Dadra and Nagar Haveli", [39.56, 27.96, 39.78, 33.57, 59.22, 55.50]),
+]
+CASES += [
+    {"corpus": c, "group": "heldout round 3+4", "pdf": pdf, "attr": attr, "expect": vals, "opts": {"min_score": 90}}
+    for c, pdf, attr, vals in _R3
+]
+
 
 def ensure_corpora(cache: Path) -> dict[str, Path]:
     """Clone each corpus at its pinned commit (shallow) and return the folder holding its PDFs."""

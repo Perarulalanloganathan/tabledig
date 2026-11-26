@@ -5,6 +5,7 @@ name: Publish to PyPI
 on:
   release:
     types: [published]
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -21,6 +22,8 @@ jobs:
           name: dist
           path: dist/
   publish:
+    # Enable after the one-time PyPI setup above: add repository variable PYPI = on
+    if: vars.PYPI == 'on'
     needs: build
     runs-on: ubuntu-24.04
     environment: pypi

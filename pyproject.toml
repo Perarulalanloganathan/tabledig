@@ -12,6 +12,7 @@ license = { text = "MIT" }
 authors = [{ name = "Perarulalan L" }]
 keywords = ["pdf", "table-extraction", "data-extraction", "pdfplumber", "financial-statements"]
 classifiers = [
+  "Development Status :: 5 - Production/Stable",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
@@ -67,4 +68,5 @@ select = ["E", "F", "I"]
 "benchmarks/real_eval.py" = ["E501"]
 "benchmarks/scan_eval.py" = ["E501"]
 "benchmarks/calibration.py" = ["E501"]
-"benchmarks/semantic_eval.py" = ["E501"]  # long case tables and URLs read better unwrapped
+"benchmarks/semantic_eval.py" = ["E501"]
+"benchmarks/head_to_head.py" = ["E501"]  # long case tables and URLs read better unwrapped

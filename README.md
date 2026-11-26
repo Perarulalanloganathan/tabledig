@@ -253,24 +253,26 @@ Source layout: `reader.py` (tables), `matcher.py` (scoring), `normalize.py` (num
 `extractor.py` (engine), `config.py` (attribute files), `output.py`, `cli.py`; `app/` holds the
 Streamlit demo and `benchmarks/` the benchmark.
 
-## Real-PDF evaluation
+## Evaluation on real documents
 
-`python benchmarks/real_eval.py` runs 36 hand-checked cases on real public PDFs from three MIT-licensed
-test suites ([pdfplumber](https://github.com/jsvine/pdfplumber), [Camelot](https://github.com/camelot-dev/camelot),
-[tabula-java](https://github.com/tabulapdf/tabula-java)), fetched at pinned commits and not stored here:
-firearm background checks, layoff notices, Chinese balance sheets, US/EU government statistics, crime
-tables, loan rates, voting records. Expected values were read off the printed pages, not produced by tabledig.
+100 hand-checked cases on real public documents, run in CI: 81 on PDFs from three MIT-licensed test suites
+([pdfplumber](https://github.com/jsvine/pdfplumber), [Camelot](https://github.com/camelot-dev/camelot),
+[tabula-java](https://github.com/tabulapdf/tabula-java)) and 19 on scanned receipts (CC0). Files are fetched at
+pinned commits and not stored here; expected values were read off the printed pages, not produced by tabledig.
 
-| Group | Cases | Passing now | How it was built |
+| Group | Cases | Passing now | First blind run |
 | --- | ---: | ---: | --- |
-| tuned | 20 | 20 | the first documents I studied; code was fixed against them |
-| held-out round 1 | 7 | 7 | random draw; **first blind run: 3/7**, failures then fixed |
-| held-out round 2 | 9 | 9 | fresh random draw, answers written before running; **first blind run: 7/9**, then fixed |
+| PDFs, tuned | 20 | 20 | (code was fixed against these) |
+| PDFs, held-out rounds 1-2 | 16 | 16 | 3/7, then 7/9 |
+| PDFs, held-out rounds 3-4 | 45 | 45 | 17/21, then 24/24 |
+| Scanned receipts, tuned | 12 | 10 | - |
+| Scanned receipts, held-out | 7 | 6 | 6/7 |
 
-Read this honestly: the "passing now" column is flattered by the fixes made after looking. The blind
-first-run scores (43% and 78%) are the better guide to how a *new* document will go, and they improved as
-the failure classes were fixed. Across all 276 PDFs in the Camelot and Tabula suites, asking for 3
-attributes that do not exist produced **0 false matches in 822 checks**, at about 0.2 s per PDF.
+**97 of 100 pass now.** Read the "passing now" column honestly: it is flattered by fixes made after looking.
+The first blind runs (43%, 78%, 81%, 100% on later rounds drawn from similar layouts) are the better guide to a
+new document. Across 361 PDFs in the three suites, asking for 3 attributes that do not exist produced
+**0 false matches**, at about 0.2 s per PDF. A head-to-head against pdfplumber and Camelot lookups on the
+same cases, with its caveats, is in [docs/benchmark.md](docs/benchmark.md).
 
 ## Tested beyond finance
 
@@ -284,9 +286,10 @@ in this repository.
 
 ## Limitations
 
-- Scanned PDFs need the optional OCR extra and Tesseract (see above); accuracy on real noisy scans is untested.
+- Scanned PDFs need the optional OCR extra and Tesseract (see above). On 19 real receipts forced OCR read the
+  right total 16 times; garbled digits and white-on-black print are the known failures.
 - Borderless tables without a recognisable header get generic column names (`col_2`, `col_3`...).
-- Wrapped row labels that span two lines are not joined yet.
+- Free-form prose ("revenue rose 12% to $4.2m") is deliberately not read: a sentence has no row structure.
 - PDFs whose text layer has no spaces between words (some government exports) cannot be matched by label.
 - Matching is lexical; it will not know that "turnover" means "revenue" unless you add an alias.
 
