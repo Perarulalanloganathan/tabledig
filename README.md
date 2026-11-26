@@ -110,6 +110,9 @@ published JSON schema (`tabledig schema`). Stuck? See [docs/troubleshooting.md](
 `inspect_tables` and `suggest_aliases` over MCP; set `TABLEDIG_MCP_ROOT` to limit which folder it can read.
 A `Dockerfile` (with Tesseract) is included: `docker build -t tabledig .`.
 
+Nothing matched lexically? `--semantic` (local embeddings) or `fallback=your_model` can pick a row for you;
+they never supply the number and their picks are flagged ([docs/fallback.md](docs/fallback.md)).
+
 Aliases can go inline: `--attr "Net profit=Profit for the year|PAT"`. Scope a row to a section with
 `--attr "Revenue @ Segment information"`.
 

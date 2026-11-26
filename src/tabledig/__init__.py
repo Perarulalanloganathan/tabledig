@@ -1,5 +1,5 @@
 """tabledig - pull named attributes out of table-style PDFs."""
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 
 from .config import load_attributes, load_config, parse_attribute_line, parse_attribute_lines
 from .extractor import Extractor, extract

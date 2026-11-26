@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.10.0
+
+- **Fallback resolvers**: `fallback=` hook for rows the lexical matcher cannot find. Built-in
+  `SemanticResolver` (`--semantic`, `pip install "tabledig[semantic]"`) and bring-your-own model (e.g. an LLM).
+  A resolver only picks a row; the value always comes from the PDF. Results are marked (`method`),
+  score-capped (75) and lower-confidence. See docs/fallback.md.
+- Measured in CI (`benchmarks/semantic_eval.py`, 25 synthetic cases): at threshold 0.80 (default) 2 of 15
+  unlisted synonyms found with 0 false matches; at 0.75, 6 of 15 with 1 false match; at 0.70, 9 of 15 with 6
+  false matches. A modest gain, so it is opt-in.
+- **Confidence check** (`benchmarks/calibration.py`, 55 real cases): confidence >= 0.95 was right in 38 of 38
+  cases; 0.80-0.95 in 9 of 10. The "mismatch" verdict is noisy on receipts (total vs. net sales rows), which
+  lowers confidence on some correct values. Still a ranking aid, not a probability.
+- Not built: free-form prose extraction ("revenue rose 12% to $4.2m"). A sentence has no row structure, so
+  there is no way to say which number is the value; guessing would break the "know when to doubt" promise.
+
 ## 0.9.0
 
 - **Multi-column pages**: a page set in two or more columns of words is also read column by column

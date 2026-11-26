@@ -7,6 +7,7 @@ nav:
   - Home: index.md
   - Gallery: gallery.md
   - Command line: cli.md
+  - Fallback resolvers: fallback.md
   - Troubleshooting: troubleshooting.md
   - Roadmap: roadmap.md
   - Changelog: changelog.md

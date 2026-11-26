@@ -35,7 +35,7 @@ The feature no free library does well: *tell the user when to doubt a value.*
   assets = liabilities + equity, year-over-year column sanity). Each failed check is a flagged record.
 - [x] **Evidence output**: original row text per value (0.4.0). Still to do: bounding box and a cropped
   page image in the demo so a person can verify in one glance.
-- [~] **Confidence**: heuristic `confidence` shipped (0.4.0). Still to do: calibrate it on a larger eval set.
+- [x] **Confidence**: heuristic `confidence` (0.4.0); checked on 55 real cases (0.10.0, `benchmarks/calibration.py`).
 - [x] `--explain`: why this row won and which runners-up were rejected.
 - [ ] Grow real eval to 40 cases (add insurance, utilities, lab, sports, government).
 
@@ -56,7 +56,7 @@ Fix the failures we already know about, then the next ones the eval exposes.
 
 ### v0.7 - Smarter matching
 - [x] Built-in **synonym packs** (0.7.0) (finance, healthcare labs, sports, government) as plain YAML, user-extensible.
-- [ ] Optional `tabledig[semantic]` extra: small local embedding model for "turnover" ~ "revenue".
+- [x] Optional `tabledig[semantic]` extra (0.10.0, opt-in, measured in CI): small local embedding model for "turnover" ~ "revenue".
   Off by default; the lexical matcher stays the baseline and the eval compares both.
 - [x] Alias suggestions (0.7.0): after a run, propose aliases from near-misses ("Net profit" -> "Profit for the year").
 - [x] Learned alias memory file (0.7.0) so repeat users stop re-typing aliases.
@@ -66,7 +66,7 @@ Fix the failures we already know about, then the next ones the eval exposes.
 - [x] **MCP server / LLM tool wrapper** so assistants can call tabledig as a trustworthy extraction tool.
 - [x] Docker image; batch mode with caching and resumable runs (0.8.0).
 - [~] "Why did it not match" guide shipped (docs/troubleshooting.md, 0.8.0); docs site + gallery built in CI (0.9.0); publishing needs Pages enabled.
-- [ ] Optional LLM fallback hook (bring-your-own model) for rows the rules cannot resolve, always marked as such.
+- [x] Optional LLM fallback hook (0.10.0) (bring-your-own model) for rows the rules cannot resolve, always marked as such.
 
 ### v1.0 - Credible and stable
 - [ ] Published on **PyPI** with trusted publishing from CI.

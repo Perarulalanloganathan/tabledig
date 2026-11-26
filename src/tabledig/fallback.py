@@ -39,7 +39,7 @@ class SemanticResolver:
 
     def __init__(
         self,
-        threshold: float = 0.85,
+        threshold: float = 0.80,
         model: str = "BAAI/bge-small-en-v1.5",
         embedder: Optional[Callable[[list[str]], list[Sequence[float]]]] = None,
     ) -> None:
