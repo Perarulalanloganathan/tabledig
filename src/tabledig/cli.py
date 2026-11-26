@@ -62,6 +62,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     ex.add_argument("--evidence", action="store_true", help="include the full source row text")
     ex.add_argument("--explain", action="store_true", help="include runner-up labels that were not chosen")
+    ex.add_argument(
+        "--ocr", choices=["auto", "on", "off"], default="auto",
+        help="OCR for scanned pages: auto (if installed, default), on (required), off",
+    )
+    ex.add_argument("--ocr-lang", default="eng", help="Tesseract language code(s), e.g. eng or eng+deu")
     ex.add_argument("--password", default=None, help="password for encrypted PDFs")
     ex.add_argument("--no-missing", action="store_true", help="omit attributes that were not found")
     ex.add_argument("-j", "--workers", type=int, default=1, help="parallel processes for many PDFs")
@@ -94,6 +99,8 @@ def _cmd_extract(args: argparse.Namespace) -> int:
         normalize_units=args.normalize_units or bool(settings.get("normalize_units", False)),
         include_missing=not args.no_missing,
         password=args.password,
+        ocr=args.ocr,
+        ocr_lang=args.ocr_lang,
         validate=args.validate,
         evidence=args.evidence,
         explain=args.explain,

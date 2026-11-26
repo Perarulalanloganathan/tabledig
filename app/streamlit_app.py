@@ -57,9 +57,9 @@ def table_to_frame(table) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=names)
 
 
-def run_extraction(tables, file_name, attributes, min_score, top_k, normalize_units):
+def run_extraction(tables, file_name, attributes, min_score, top_k, normalize_units, validate=False):
     extractor = Extractor(
-        attributes, min_score=min_score, top_k=top_k, normalize_units=normalize_units
+        attributes, min_score=min_score, top_k=top_k, normalize_units=normalize_units, validate=validate
     )
     return extractor.extract_tables(tables, file_name)
 
@@ -82,6 +82,10 @@ with st.sidebar:
     normalize_units = st.checkbox(
         "Convert to base units", help="Applies 'in thousands / lakhs / millions' declared in the PDF"
     )
+    validate = st.checkbox(
+        "Validate totals",
+        help="Checks that 'Total' rows equal the rows above them; adds a check and a confidence column",
+    )
     wide = st.checkbox("Wide layout (one column per table column)", value=True)
     st.caption("Files are processed in memory for this session only.")
 
@@ -95,7 +99,7 @@ if source == "Try a sample":
     data, file_name = sample["path"].read_bytes(), sample["path"].name
     default_attrs = sample["attributes"]
 else:
-    upload = st.file_uploader("PDF with tables (text-based, not scanned)", type="pdf")
+    upload = st.file_uploader("PDF with tables", type="pdf")
     if upload is not None:
         data, file_name = upload.getvalue(), upload.name
     default_attrs = "Revenue\nNet profit = Profit for the year | PAT"
@@ -130,7 +134,9 @@ if not tables:
     )
     st.stop()
 
-records = run_extraction(tables, file_name, attributes, float(min_score), int(top_k), normalize_units)
+records = run_extraction(
+    tables, file_name, attributes, float(min_score), int(top_k), normalize_units, validate
+)
 found = {r.attribute for r in records if r.status == "found"}
 missing = [a.name for a in attributes if a.name not in found]
 
@@ -146,9 +152,11 @@ with tab_results:
         fieldnames, rows = records_to_wide(records)
         frame = pd.DataFrame(rows, columns=fieldnames)
         # values first, bookkeeping last, so the numbers are visible without scrolling
-        meta = {"file", "attribute", "matched_label", "page", "unit", "score", "status", "note"}
+        meta = {"file", "attribute", "matched_label", "page", "unit", "score", "status", "note",
+                "confidence", "check"}  # fmt: skip
         values = [c for c in frame.columns if c not in meta]
         order = ["attribute", "matched_label", *values, "page", "unit", "score", "status"]
+        order += ["confidence", "check"]
         if frame["file"].nunique() > 1:
             order.insert(0, "file")
         frame = frame[[c for c in order if c in frame.columns]]

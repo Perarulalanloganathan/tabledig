@@ -95,6 +95,25 @@ def _split_numeric_tail(line: str) -> tuple[str, list[str]]:
     return " ".join(tokens), tail
 
 
+_PERIOD = re.compile(
+    r"(?:\b(?:FY|F\.Y\.?|Q[1-4]|H[12])\s?'?\d{2,4}(?:\s?[-/\u2013]\s?\d{2,4})?"
+    r"|\b(?:19|20)\d{2}(?:\s?[-/\u2013]\s?\d{2,4})?\b)",
+    re.IGNORECASE,
+)
+
+
+def _period_header(line: str) -> list[str]:
+    """Column names from a header line such as ``Particulars  Note  FY 2024  FY 2023``.
+
+    Returns the period tokens (two or more) when the rest of the line holds no numbers, else ``[]``.
+    """
+    found = [m.group(0).strip() for m in _PERIOD.finditer(line)]
+    if len(found) < 2:
+        return []
+    rest = _PERIOD.sub(" ", line)
+    return [] if re.search(r"\d", rest) else found
+
+
 def _build_text_tables(
     text: str, page: int, start_index: int, unit: Optional[Unit]
 ) -> list[Table]:
@@ -124,6 +143,11 @@ def _build_text_tables(
         current_rows, current_header = [], []
 
     for line in text.splitlines():
+        period = _period_header(line)
+        if period:
+            flush()
+            current_header = period
+            continue
         label, tail = _split_numeric_tail(line)
         if not tail:
             continue
@@ -167,9 +191,19 @@ def _width(table: Table) -> int:
 
 
 def read_tables(
-    path: Union[str, Path], *, text_fallback: bool = True, password: Optional[str] = None
+    path: Union[str, Path],
+    *,
+    text_fallback: bool = True,
+    password: Optional[str] = None,
+    ocr: object = "auto",
+    ocr_lang: str = "eng",
+    report: Optional[list[str]] = None,
 ) -> list[Table]:
     """Return every table found in ``path`` (all pages).
+
+    Pages with no text layer (scans) are read with OCR when ``ocr`` is ``"auto"`` (the default, used
+    only if the optional OCR extra and Tesseract are installed) or ``"on"`` (error if unavailable);
+    ``"off"`` disables it. Human-readable problems are appended to ``report``.
 
     A ruled table with no header inherits the previous page's header when the column counts
     match (long tables usually print the header only once). Pages whose ruled tables hold
@@ -177,11 +211,24 @@ def read_tables(
     """
     import pdfplumber
 
+    from .ocr import INSTALL_HINT, ocr_available, ocr_page_text, resolve_mode
+
+    ocr_mode = resolve_mode(ocr)
+    can_ocr = ocr_mode != "off" and ocr_available()
+    if ocr_mode == "on" and not can_ocr:
+        raise RuntimeError("OCR requested but not available: " + INSTALL_HINT)
     tables: list[Table] = []
     previous: Optional[Table] = None
     with pdfplumber.open(str(path), password=password) as pdf:
         for page in pdf.pages:
             text = page.extract_text() or ""
+            scanned = len(text.strip()) < 20 and bool(page.images)
+            used_ocr = False
+            if scanned:
+                if can_ocr:
+                    text, used_ocr = ocr_page_text(page, ocr_lang), True
+                elif report is not None:
+                    report.append(f"page {page.page_number}: {INSTALL_HINT}")
             unit = detect_unit(text)
 
             built: list[Table] = []
@@ -194,7 +241,11 @@ def read_tables(
                     built.append(table)
 
             if text_fallback and _good_rows(built) < 2:
-                built.extend(_build_text_tables(text, page.page_number, len(tables) + len(built), unit))
+                fresh = _build_text_tables(text, page.page_number, len(tables) + len(built), unit)
+                if used_ocr:
+                    for table in fresh:
+                        table.source = "ocr"
+                built.extend(fresh)
             for table in built:
                 table.header = _unique_header(table.header)
             tables.extend(built)

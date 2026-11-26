@@ -54,9 +54,11 @@ def _describe_error(exc: Exception) -> str:
     return f"{name}: {text}" if text else name
 
 
-def _confidence(score: float, check_status: Optional[str]) -> float:
+def _confidence(score: float, check_status: Optional[str], source: Optional[str] = None) -> float:
     """Heuristic 0-1 confidence: the match score, nudged by what validation found."""
     base = score / 100.0
+    if source == "ocr":
+        base *= 0.9  # OCR can misread digits
     if check_status == "verified":
         base = min(1.0, base + 0.1)
     elif check_status == "partial":
@@ -94,6 +96,11 @@ class Extractor:
         Emit a ``not_found`` record for attributes with no match.
     password:
         Password for encrypted PDFs.
+    ocr:
+        ``"auto"`` (default) reads scanned pages with OCR if the ``ocr`` extra and Tesseract are
+        installed; ``"on"`` requires it; ``"off"`` never uses it.
+    ocr_lang:
+        Tesseract language code(s), e.g. ``"eng"`` or ``"eng+deu"``.
     validate:
         Check totals/subtotals and balance-sheet identities; adds ``check``, ``check_note`` and a
         heuristic ``confidence`` to each record.
@@ -115,6 +122,8 @@ class Extractor:
         include_missing: bool = True,
         decimal: Optional[str] = None,
         password: Optional[str] = None,
+        ocr: object = "auto",
+        ocr_lang: str = "eng",
         validate: bool = False,
         evidence: bool = False,
         explain: bool = False,
@@ -127,6 +136,8 @@ class Extractor:
         self.include_missing = include_missing
         self.decimal = decimal
         self.password = password
+        self.ocr = ocr
+        self.ocr_lang = ocr_lang
         self.validate = validate
         self.evidence = evidence
         self.explain = explain
@@ -134,8 +145,16 @@ class Extractor:
 
     # -- single file --------------------------------------------------------
     def extract_file(self, path: Union[str, Path]) -> list[Record]:
-        tables = read_tables(path, password=self.password)
-        return self.extract_tables(tables, Path(path).name)
+        report: list[str] = []
+        tables = read_tables(
+            path, password=self.password, ocr=self.ocr, ocr_lang=self.ocr_lang, report=report
+        )
+        records = self.extract_tables(tables, Path(path).name)
+        if report:
+            for record in records:
+                if record.status == "not_found" and not record.note:
+                    record.note = "; ".join(report[:2])
+        return records
 
     def extract_tables(self, tables: Iterable[Table], file_name: str = "") -> list[Record]:
         tables = list(tables)
@@ -202,7 +221,9 @@ class Extractor:
         unit = cand.table.unit
         scale = unit.scale if (unit and self.normalize_units) else 1.0
         check = (checks or {}).get((cand.table.page, cand.table.index, cand.row_idx))
-        confidence = _confidence(cand.score, check.status if check else None) if self.validate else None
+        confidence = None
+        if self.validate:
+            confidence = _confidence(cand.score, check.status if check else None, cand.table.source)
         out = []
         for column, raw, number in cand.values:
             out.append(

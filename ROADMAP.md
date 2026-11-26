@@ -19,9 +19,9 @@ table-style PDFs**: small, deterministic, honest about its mistakes.
 
 ## How we know we are "best in segment"
 
-| Metric | Today (v0.3.2) | v1.0 target |
+| Metric | Today (v0.4.0) | v1.0 target |
 |---|---|---|
-| Real-PDF eval cases | 17 (15 pass) | 100+, >= 90% pass |
+| Real-PDF eval cases | 19 (17 pass) | 100+, >= 90% pass |
 | Document types covered | statements, invoices, government/lab/sports tables | + scans, multi-column, merged-header tables |
 | Wrong value returned without a warning | not measured | < 2% of returned values (measured) |
 | Published head-to-head vs raw pdfplumber / Camelot + hand-written lookup | none | yes, fair methodology, reproducible |
@@ -31,13 +31,12 @@ table-style PDFs**: small, deterministic, honest about its mistakes.
 
 ### v0.4 - Trust (validation and evidence)
 The feature no free library does well: *tell the user when to doubt a value.*
-- [ ] **`validate` mode**: arithmetic checks (total = sum of parts, subtotal chains, balance sheet
+- [x] **`validate` mode** (shipped in 0.4.0): arithmetic checks (total = sum of parts, subtotal chains, balance sheet
   assets = liabilities + equity, year-over-year column sanity). Each failed check is a flagged record.
-- [ ] **Evidence output**: bounding box and the original row text per value; optional cropped
+- [x] **Evidence output**: original row text per value (0.4.0). Still to do: bounding box and a cropped
   page image in the demo so a person can verify in one glance.
-- [ ] **Calibrated confidence**: combine match score, table quality and validation result into one
-  `confidence`; test calibration on the eval set.
-- [ ] `--explain`: why this row won and which runners-up were rejected.
+- [~] **Confidence**: heuristic `confidence` shipped (0.4.0). Still to do: calibrate it on a larger eval set.
+- [x] `--explain`: why this row won and which runners-up were rejected.
 - [ ] Grow real eval to 40 cases (add insurance, utilities, lab, sports, government).
 
 ### v0.5 - Layout coverage
@@ -49,10 +48,10 @@ Fix the failures we already know about, then the next ones the eval exposes.
 - [ ] **Section scoping**: "Revenue" *within* "Segment information"; disambiguate repeated labels.
 
 ### v0.6 - Scanned documents
-- [ ] Optional `tabledig[ocr]` extra (local OCR engine). Same API; OCR confidence feeds the value
+- [x] Optional `tabledig[ocr]` extra (Tesseract; shipped in 0.4.0, pulled forward). Same API; OCR confidence feeds the value
   confidence. Clear warning when a page has no text layer instead of silent `not_found`.
-- [ ] Table structure for images (lines and whitespace) with the same evidence output.
-- [ ] 10+ scanned cases in the real eval, tracked separately.
+- [~] Table structure for images (lines and whitespace) with the same evidence output.
+- [ ] 10+ *real* scanned cases in the eval, tracked separately (current OCR tests use synthetic scans).
 
 ### v0.7 - Smarter matching
 - [ ] Built-in **synonym packs** (finance, healthcare labs, sports, government) as plain YAML, user-extensible.

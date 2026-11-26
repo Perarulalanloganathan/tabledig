@@ -145,7 +145,44 @@ When several rows match, the highest score wins; ties go to the shorter, more sp
 - `status`: `found`, `not_found`, or `error` (unreadable PDF; the message is in `note`)
 - `value`: parsed number; `raw_value`: the cell text as printed
 - `unit`: unit declared on the page (`thousands`, `lakhs`, ...) or `base` after `--normalize-units`
-- `source`: `ruled` (grid lines) or `text` (whitespace-aligned)
+- `source`: `ruled` (grid lines), `text` (whitespace-aligned) or `ocr` (read from a scanned page)
+- Optional columns, present only when you ask for them: `confidence`, `check`, `check_note`
+  (`--validate`), `row_text` (`--evidence`), `alternatives` (`--explain`)
+
+## Can I trust this value? Validation, evidence, explain
+
+A value can be read correctly and still be the *wrong* value (a neighbouring row, another column).
+Tables often contain their own proof, so `--validate` uses it:
+
+```bash
+tabledig extract report.pdf --attr "Total income" --attr "Revenue" --validate --evidence --explain
+```
+
+- **`check`**: for rows labelled *Total / Subtotal / Grand total* it tests whether the numbers equal the
+  rows above (allowing rounding, `(brackets)` negatives and subtotal roll-ups), and whether
+  *total assets* equals *total equity and liabilities*. Tables that continue on later pages are joined;
+  percentage, rate and ratio columns are skipped. Result: `verified` (all additive columns add up),
+  `partial` (some do not, `check_note` says which), `mismatch`, or `unchecked` (nothing to compare against,
+  which is true of most rows).
+- **`confidence`**: a simple 0-1 heuristic (match score, raised when verified, lowered on partial,
+  mismatch or OCR). It is a ranking aid, not a calibrated probability.
+- **`--evidence`** adds the whole source row; **`--explain`** lists the runner-up labels that lost.
+
+On the real PDFs in the evaluation, the totals of a 22-column table and of a 16-page report both verify.
+
+## Scanned PDFs (OCR)
+
+```bash
+pip install "tabledig[ocr]"      # plus the Tesseract program: apt/brew install tesseract, or the Windows installer
+tabledig extract scan.pdf --attr "Total income" --validate
+```
+
+Pages with no text layer are rendered, table borders are erased, and the page is read with Tesseract,
+then parsed like any other borderless table (`source` = `ocr`). Without the extra, a scanned file returns
+`not_found` with a note saying why. `--ocr off|auto|on` and `--ocr-lang eng+deu` control it.
+OCR can misread digits, so combine it with `--validate`.
+*Honest status:* OCR is tested on synthetic scans (the sample PDFs rendered to images at 300 dpi), not yet
+on a corpus of real, noisy scans.
 
 ## Benchmark (synthetic)
 
@@ -189,11 +226,11 @@ Streamlit demo and `benchmarks/` the benchmark.
 
 ## Real-PDF evaluation
 
-`python benchmarks/real_eval.py` runs 17 hand-checked cases on public PDFs (downloaded at a pinned
+`python benchmarks/real_eval.py` runs 19 hand-checked cases on public PDFs (downloaded at a pinned
 commit from the MIT-licensed [pdfplumber](https://github.com/jsvine/pdfplumber) test suite, not stored
 here): firearm background checks, California layoff notices, a Chinese balance sheet, a Chinese
 engineering standard, bank loan rates and figure-skating scores. Expected values were read off the printed
-pages. **Current result: 15/17 pass.** The two failures are kept in the score on purpose: a value printed
+pages. **Current result: 17/19 pass.** The two failures are kept in the score on purpose: a value printed
 *before* its label ("327 BALLOTS CAST") and a newspaper-style multi-column layout.
 
 ## Tested beyond finance
@@ -208,7 +245,7 @@ in this repository.
 
 ## Limitations
 
-- Needs a text layer. **Scanned PDFs need OCR first** (e.g. `ocrmypdf`); built-in OCR is on the roadmap.
+- Scanned PDFs need the optional OCR extra and Tesseract (see above); accuracy on real noisy scans is untested.
 - Borderless tables without a year-style header get generic column names (`col_2`, `col_3`...).
 - Wrapped row labels that span two lines are not joined yet.
 - PDFs whose text layer has no spaces between words (some government exports) cannot be matched by label.

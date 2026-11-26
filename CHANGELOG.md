@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0
+- **Validation** (`--validate` / `validate=True`): checks that Total/Subtotal rows equal the rows above and
+  that total assets equal total equity and liabilities; joins tables continuing across pages; skips
+  percentage/ratio columns. Adds `check`, `check_note` and a heuristic `confidence`.
+- `--evidence` (`row_text`) and `--explain` (`alternatives`: runner-up labels).
+- **OCR** for scanned pages (`pip install "tabledig[ocr]"` + Tesseract): rule-line removal, layout-preserving
+  text rebuild, `--ocr off|auto|on`, `--ocr-lang`. A scanned file without OCR now says why it returned nothing.
+- Header detection now understands `FY 2024`, `Q1 2024`, `2023-24` style column headers in text tables.
+- Demo app: "Validate totals" option. CI installs Tesseract so OCR tests run.
+- Real-PDF evaluation: 19 cases (17 pass), including validation verdicts on real totals.
+
 ## 0.3.2
 - Fixed: the Streamlit demo failed to read uploaded/sample PDFs on Windows (temp file reopened while open).
 - `benchmarks/real_eval.py`: 17 hand-checked cases on real public PDFs (15 pass; 2 documented limits), run in CI.

@@ -24,8 +24,9 @@ dependencies = [
 
 [project.optional-dependencies]
 excel = ["pandas>=1.5", "openpyxl>=3.1"]
+ocr = ["pytesseract>=0.3.10", "numpy>=1.21"]
 app = ["streamlit>=1.35", "pandas>=1.5", "openpyxl>=3.1"]
-dev = ["pytest>=7", "reportlab>=4", "ruff>=0.4", "streamlit>=1.35", "pandas>=1.5"]
+dev = ["pytest>=7", "reportlab>=4", "ruff>=0.4", "streamlit>=1.35", "pandas>=1.5", "pytesseract>=0.3.10", "numpy>=1.21"]
 
 [project.urls]
 Homepage = "https://github.com/Perarulalanloganathan/tabledig"

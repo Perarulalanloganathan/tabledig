@@ -30,3 +30,11 @@ def test_app_warns_without_attributes():
     at.text_area[0].set_value("  \n").run()
     assert not at.exception
     assert any("at least one attribute" in w.value for w in at.warning)
+
+
+def test_app_validate_option_adds_check_column():
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    at.sidebar.checkbox[1].check().run()  # "Validate totals" (after "Convert to base units")
+    assert not at.exception
+    columns = [c for df in at.dataframe for c in df.value.columns]
+    assert "check" in columns and "confidence" in columns
