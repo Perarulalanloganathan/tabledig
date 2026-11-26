@@ -1,6 +1,7 @@
 # Changelog
 
-## Unreleased
+## 0.3.2
+- Fixed: the Streamlit demo failed to read uploaded/sample PDFs on Windows (temp file reopened while open).
 - `benchmarks/real_eval.py`: 17 hand-checked cases on real public PDFs (15 pass; 2 documented limits), run in CI.
 - CI now also runs the test suite on Windows and macOS.
 
