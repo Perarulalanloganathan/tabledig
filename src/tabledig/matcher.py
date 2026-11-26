@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from difflib import SequenceMatcher
 
 _STOP = {"of", "the", "and", "to", "for", "on", "in", "a", "an"}
@@ -9,10 +10,16 @@ _LEADING_INDEX = re.compile(r"^\s*\(?[a-z0-9]{1,3}[.)]\s+", re.IGNORECASE)
 
 
 def normalize_label(text: str) -> str:
-    """Lower-case, drop list numbering and punctuation, collapse whitespace."""
+    """Lower-case, drop accents, list numbering and punctuation; collapse whitespace.
+
+    Works for any script: ``"Résultat net"`` -> ``"resultat net"`` and Chinese, Cyrillic or Greek
+    labels are kept (only punctuation is removed).
+    """
     s = _LEADING_INDEX.sub("", str(text))
-    s = s.lower().replace("&", " and ")
-    s = re.sub(r"[^a-z0-9]+", " ", s)
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
+    s = s.casefold().replace("&", " and ")
+    s = re.sub(r"[\W_]+", " ", s)
     return s.strip()
 
 
@@ -59,6 +66,8 @@ def score_label(query: str, label: str, mode: str = "fuzzy") -> tuple[float, str
 
     if mode == "contains":
         if _contiguous(q_tokens, l_tokens):
+            return 90.0, "contains"
+        if not q.isascii() and q in lab:  # scripts written without spaces (e.g. Chinese)
             return 90.0, "contains"
         return 0.0, "none"
 

@@ -16,7 +16,7 @@ from .models import Table, Unit
 from .normalize import detect_unit, is_year_like, parse_number
 
 _HEADER_TOKEN = re.compile(r"(?:19|20)\d{2}|FY\s?\d{2}", re.IGNORECASE)
-_HAS_LETTERS = re.compile(r"[A-Za-z]")
+_HAS_LETTERS = re.compile(r"[^\W\d_]")
 
 
 def _clean(cell: object) -> str:
@@ -49,10 +49,32 @@ def _merge_header_rows(top: list[str], bottom: list[str]) -> list[str]:
     return merged
 
 
+def _explode_stacked(row: list[object]) -> list[list[object]]:
+    """Split a row whose cells each hold several newline-separated values into several rows.
+
+    Some PDFs draw a whole column block as one cell ("Alabama\\nAlaska\\n..." next to
+    "18,870\\n209\\n..."). We split only when every multi-line cell has the same number of
+    lines and at least one of them is purely numeric, so ordinary wrapped text is left alone.
+    """
+    lines = [str(c).split("\n") if c else [] for c in row]
+    sizes = {len(ln) for ln in lines if len(ln) > 1}
+    if len(sizes) != 1:
+        return [row]
+    n = sizes.pop()
+    numeric_block = any(
+        len(ln) == n and all(parse_number(x) is not None for x in ln) for ln in lines
+    )
+    if not numeric_block:
+        return [row]
+    return [[ln[i].strip() if len(ln) == n else (str(c) if i == 0 else "") for ln, c in zip(lines, row)]
+            for i in range(n)]
+
+
 def _build_ruled_table(
     raw: list[list[object]], page: int, index: int, unit: Optional[Unit]
 ) -> Optional[Table]:
-    rows = [[_clean(c) for c in r] for r in raw]
+    exploded = [piece for r in raw for piece in _explode_stacked(r)]
+    rows = [[_clean(c) for c in r] for r in exploded]
     rows = [r for r in rows if any(r)]
     if len(rows) < 2:
         return None
@@ -116,11 +138,34 @@ def _build_text_tables(
     return tables
 
 
+def _good_rows(tables: list[Table]) -> int:
+    """Rows that look like data: a text label followed by at least one number."""
+    count = 0
+    for table in tables:
+        for row in table.rows:
+            label_idx = next(
+                (i for i, c in enumerate(row) if _HAS_LETTERS.search(c) and parse_number(c) is None), -1
+            )
+            if label_idx >= 0 and any(parse_number(c) is not None for c in row[label_idx + 1 :]):
+                count += 1
+    return count
+
+
+def _width(table: Table) -> int:
+    return max((len(r) for r in table.rows), default=0)
+
+
 def read_tables(path: Union[str, Path], *, text_fallback: bool = True) -> list[Table]:
-    """Return every table found in ``path`` (all pages)."""
+    """Return every table found in ``path`` (all pages).
+
+    A ruled table with no header inherits the previous page's header when the column counts
+    match (long tables usually print the header only once). Pages whose ruled tables hold
+    almost no usable rows fall back to whitespace-aligned text parsing.
+    """
     import pdfplumber
 
     tables: list[Table] = []
+    previous: Optional[Table] = None
     with pdfplumber.open(str(path)) as pdf:
         for page in pdf.pages:
             text = page.extract_text() or ""
@@ -130,9 +175,15 @@ def read_tables(path: Union[str, Path], *, text_fallback: bool = True) -> list[T
             for raw in page.extract_tables() or []:
                 table = _build_ruled_table(raw, page.page_number, len(tables) + len(built), unit)
                 if table:
+                    same_width = previous is not None and _width(table) == len(previous.header)
+                    if not table.header and previous and previous.header and same_width:
+                        table.header = list(previous.header)
                     built.append(table)
 
-            if not built and text_fallback:
-                built = _build_text_tables(text, page.page_number, len(tables), unit)
+            if text_fallback and _good_rows(built) < 2:
+                built.extend(_build_text_tables(text, page.page_number, len(tables) + len(built), unit))
             tables.extend(built)
+            ruled = [t for t in built if t.source == "ruled" and t.rows]
+            if ruled:
+                previous = ruled[-1]
     return tables

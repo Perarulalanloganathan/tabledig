@@ -47,3 +47,24 @@ def test_detect_unit(text, name, scale):
 
 def test_detect_unit_none():
     assert detect_unit("Revenue was strong in the quarter") is None
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("1.234,56", 1234.56),
+        ("1,234.56", 1234.56),
+        ("1 234,56", 1234.56),
+        ("1'234.50", 1234.5),
+        ("12,5", 12.5),
+        ("1.234.567", 1234567.0),
+        ("98 452", 98452.0),
+    ],
+)
+def test_parse_number_international_formats(text, expected):
+    assert parse_number(text) == expected
+
+
+def test_parse_number_forced_decimal_mark():
+    assert parse_number("1,234", decimal=",") == 1.234
+    assert parse_number("1,234", decimal=".") == 1234.0

@@ -16,7 +16,7 @@ from .reader import read_tables
 DEFAULT_SKIP_COLUMNS = re.compile(
     r"^(?:notes?|note\s*no\.?|ref\.?|sl\.?\s*no\.?|s\.?\s*no\.?|sr\.?\s*no\.?)$", re.IGNORECASE
 )
-_HAS_LETTERS = re.compile(r"[A-Za-z]")
+_HAS_LETTERS = re.compile(r"[^\W\d_]")
 
 AttributeLike = Union[str, dict, Attribute]
 
@@ -60,6 +60,8 @@ class Extractor:
         so results are in base units.
     include_missing:
         Emit a ``not_found`` record for attributes with no match.
+    decimal:
+        ``"."`` or ``","`` to force the decimal mark (default: auto-detect, so ``1.234,56`` works).
     """
 
     def __init__(
@@ -70,6 +72,7 @@ class Extractor:
         top_k: int = 1,
         normalize_units: bool = False,
         include_missing: bool = True,
+        decimal: Optional[str] = None,
         skip_columns: re.Pattern = DEFAULT_SKIP_COLUMNS,
     ) -> None:
         self.attributes = coerce_attributes(attributes)
@@ -77,6 +80,7 @@ class Extractor:
         self.top_k = max(1, top_k)
         self.normalize_units = normalize_units
         self.include_missing = include_missing
+        self.decimal = decimal
         self.skip_columns = skip_columns
 
     # -- single file --------------------------------------------------------
@@ -122,7 +126,7 @@ class Extractor:
                     column = table.header[j] if j < len(table.header) and table.header[j] else f"col_{j + 1}"
                     if self.skip_columns.match(column):
                         continue
-                    number = parse_number(row[j])
+                    number = parse_number(row[j], self.decimal)
                     if number is not None:
                         values.append((column, row[j], number))
                 if not values:

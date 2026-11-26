@@ -44,12 +44,45 @@ _UNIT_PATTERNS = (
 )
 
 
-def parse_number(text: object) -> Optional[float]:
+_SPACED_THOUSANDS = re.compile(r"\d{1,3}(?:[ '](?:\d{3}))+(?:[.,]\d+)?")
+
+
+def _normalize_separators(s: str, decimal: Optional[str]) -> str:
+    """Turn ``1,234.56`` / ``1.234,56`` / ``1 234,56`` / ``1'234.56`` into ``1234.56``.
+
+    ``decimal`` is ``"."``, ``","`` or ``None`` (auto-detect). Auto mode treats a lone comma
+    followed by exactly three digits as a thousands separator (``1,234`` = 1234) and any
+    other lone comma as a decimal comma (``12,5`` = 12.5).
+    """
+    s = s.replace("\u00a0", " ").replace("\u202f", " ").replace("’", "'")
+    if _SPACED_THOUSANDS.fullmatch(s):
+        s = re.sub(r"[ ']", "", s)
+    if decimal == ",":
+        return s.replace(".", "").replace(",", ".")
+    if decimal == ".":
+        return s.replace(",", "")
+    has_dot, has_comma = "." in s, "," in s
+    if has_dot and has_comma:
+        if s.rfind(",") > s.rfind("."):  # 1.234,56
+            return s.replace(".", "").replace(",", ".")
+        return s.replace(",", "")  # 1,234.56 and Indian 12,34,567.50
+    if has_comma:
+        parts = s.split(",")
+        if len(parts) == 2 and (len(parts[1]) != 3 or parts[0] in {"0", ""}):
+            return parts[0] + "." + parts[1]  # 12,5  /  1234,56  /  0,500
+        return s.replace(",", "")  # 1,234  /  12,34,567
+    if has_dot and re.fullmatch(r"\d{1,3}(?:\.\d{3}){2,}", s):
+        return s.replace(".", "")  # 1.234.567
+    return s
+
+
+def parse_number(text: object, decimal: Optional[str] = None) -> Optional[float]:
     """Parse a table cell into a float, or ``None`` if it is not a number.
 
-    Handles thousands separators (``1,234`` and Indian ``12,34,567``), negatives
-    in parentheses (``(1,200)``), trailing minus, currency symbols, percent signs
-    and dash placeholders (treated as zero).
+    Handles thousands separators (``1,234``, Indian ``12,34,567``, European ``1.234,56``,
+    spaced ``1 234`` and Swiss ``1'234``), negatives in parentheses (``(1,200)``), trailing
+    minus, currency symbols, percent signs and dash placeholders (treated as zero).
+    Pass ``decimal=","`` or ``"."`` to force the decimal mark instead of auto-detecting it.
     """
     if text is None:
         return None
@@ -72,7 +105,7 @@ def parse_number(text: object) -> Optional[float]:
     if s.endswith("-") and len(s) > 1:
         negative = True
         s = s[:-1].strip()
-    s = s.rstrip("%").strip().replace(",", "")
+    s = _normalize_separators(s.rstrip("%").strip(), decimal)
 
     if not _PLAIN_NUMBER.fullmatch(s):
         return None

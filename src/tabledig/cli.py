@@ -51,6 +51,12 @@ def _build_parser() -> argparse.ArgumentParser:
     ex.add_argument("--min-score", type=float, help="minimum match score 0-100 (default 80)")
     ex.add_argument("--top-k", type=int, help="best-matching rows to keep per attribute (default 1)")
     ex.add_argument("--normalize-units", action="store_true", help="convert lakhs/millions/... to base units")
+    ex.add_argument(
+        "--decimal",
+        choices=["auto", "dot", "comma"],
+        default="auto",
+        help="decimal mark: auto-detect (default), or force dot (1,234.5) / comma (1.234,5)",
+    )
     ex.add_argument("--no-missing", action="store_true", help="omit attributes that were not found")
     ex.add_argument("-j", "--workers", type=int, default=1, help="parallel processes for many PDFs")
 
@@ -80,6 +86,7 @@ def _cmd_extract(args: argparse.Namespace) -> int:
         top_k=args.top_k if args.top_k is not None else settings.get("top_k", 1),
         normalize_units=args.normalize_units or bool(settings.get("normalize_units", False)),
         include_missing=not args.no_missing,
+        decimal={"auto": None, "dot": ".", "comma": ","}[args.decimal],
     )
     pdfs = _collect_pdfs(args.paths)
     records = extractor.extract_many(pdfs, workers=args.workers)

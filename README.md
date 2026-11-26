@@ -184,11 +184,22 @@ Source layout: `reader.py` (tables), `matcher.py` (scoring), `normalize.py` (num
 `extractor.py` (engine), `config.py` (attribute files), `output.py`, `cli.py`; `app/` holds the
 Streamlit demo and `benchmarks/` the benchmark.
 
+## Tested beyond finance
+
+The extractor is not tied to financial statements. Besides the synthetic benchmark, it was spot-checked
+against public third-party PDFs (FBI firearm background-check tables, a California WARN layoff report,
+a Chinese-language land-use standard): values were compared with the printed numbers and matched,
+including a 22-column table and a multi-page table whose header appears only on page 1. The test suite also
+builds prose-plus-table documents (lab results, sales by region, price lists, German-format statements) and
+checks that numbers written in the narrative are never returned. Those third-party PDFs are not included
+in this repository.
+
 ## Limitations
 
 - Needs a text layer. **Scanned PDFs need OCR first** (e.g. `ocrmypdf`); built-in OCR is on the roadmap.
 - Borderless tables without a year-style header get generic column names (`col_2`, `col_3`...).
 - Wrapped row labels that span two lines are not joined yet.
+- PDFs whose text layer has no spaces between words (some government exports) cannot be matched by label.
 - Matching is lexical; it will not know that "turnover" means "revenue" unless you add an alias.
 
 ## Roadmap
