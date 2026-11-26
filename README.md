@@ -106,7 +106,7 @@ wordings for the attributes you ask for. `--suggest` shows near-miss rows for an
 For big batches add `--cache .tabledig-cache`: finished files are skipped on re-runs. Results follow a
 published JSON schema (`tabledig schema`). Stuck? See [docs/troubleshooting.md](docs/troubleshooting.md).
 
-**For AI assistants:** `pip install "tabledig[mcp]"` then run `tabledig-mcp` to expose `extract_attributes`,
+**For AI assistants:** `pip install "tabledig[mcp]"` (Python 3.10+) then run `tabledig-mcp` to expose `extract_attributes`,
 `inspect_tables` and `suggest_aliases` over MCP; set `TABLEDIG_MCP_ROOT` to limit which folder it can read.
 A `Dockerfile` (with Tesseract) is included: `docker build -t tabledig .`.
 
