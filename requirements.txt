@@ -5,4 +5,4 @@ pandas>=1.5
 openpyxl>=3.1
 # Pinned to a release tag: Streamlit Cloud caches git installs, so an unpinned @main goes stale.
 # Bump this tag when releasing, and only after the release (the tag must exist) is published.
-tabledig[ocr] @ git+https://github.com/Perarulalanloganathan/tabledig.git@v0.10.0
+tabledig[ocr] @ git+https://github.com/Perarulalanloganathan/tabledig.git@v1.0.0
