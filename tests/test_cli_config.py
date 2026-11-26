@@ -63,3 +63,22 @@ def test_cli_missing_path(capsys):
 def test_cli_inspect(income_pdf, capsys):
     assert main(["inspect", str(income_pdf)]) == 0
     assert "Revenue from operations" in capsys.readouterr().out
+
+
+def test_parse_attribute_lines():
+    from tabledig import parse_attribute_line, parse_attribute_lines
+
+    attr = parse_attribute_line("Net profit = Profit for the year | PAT")
+    assert (attr.name, attr.aliases) == ("Net profit", ["Profit for the year", "PAT"])
+    assert parse_attribute_line("  # comment") is None
+    assert parse_attribute_line("") is None
+    names = [a.name for a in parse_attribute_lines("Revenue\n\n# skip\nFinance costs=Interest")]
+    assert names == ["Revenue", "Finance costs"]
+
+
+def test_cli_attr_alias_syntax(tmp_path, income_pdf):
+    out = tmp_path / "o.csv"
+    code = main(["extract", str(income_pdf), "--attr", "Net profit=Profit for the year|PAT", "-o", str(out)])
+    assert code == 0
+    rows = list(csv.DictReader(out.open()))
+    assert rows[0]["matched_label"] == "Profit for the year"

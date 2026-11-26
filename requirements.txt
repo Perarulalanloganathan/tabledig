@@ -1,0 +1,6 @@
+# Dependencies for hosting the Streamlit demo (Streamlit Community Cloud / Spaces).
+# For local development use:  pip install -e ".[app]"
+streamlit>=1.35
+pandas>=1.5
+openpyxl>=3.1
+tabledig @ git+https://github.com/Perarulalanloganathan/tabledig.git@main

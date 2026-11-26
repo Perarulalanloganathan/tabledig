@@ -29,6 +29,16 @@ Tell the tool that once with an alias and it is found:
   aliases: [Profit for the year, Profit after tax, PAT]
 ```
 
+## Try it in the browser
+
+A Streamlit app lets you upload a PDF (or pick a sample), list the attributes you want, and see
+the results, every detected table, and a CSV download:
+
+```bash
+pip install -e ".[app]"
+streamlit run app/streamlit_app.py
+```
+
 ## Why it is useful
 
 - **Any table-style PDF.** Not tied to one country, form or taxonomy.
@@ -78,6 +88,8 @@ tabledig extract ./reports/ -a attributes.yaml -o result.xlsx --wide -j 4
 Output is **long format** by default (one row per attribute x column). `--wide` gives one row
 per attribute with a column per table column (e.g. one per year).
 
+Aliases can go inline: `--attr "Net profit=Profit for the year|PAT"`.
+
 ### 3. Or use it from Python
 
 ```python
@@ -125,6 +137,32 @@ When several rows match, the highest score wins; ties go to the shorter, more sp
 - `unit`: unit declared on the page (`thousands`, `lakhs`, ...) or `base` after `--normalize-units`
 - `source`: `ruled` (grid lines) or `text` (whitespace-aligned)
 
+## Benchmark (synthetic)
+
+`benchmarks/run_benchmark.py` generates a seeded corpus of fictional PDFs - bordered statements,
+borderless statements and invoices, with units, negative formats, Indian number grouping, a "Note"
+column, look-alike distractor rows and typos in 25% of labels - and scores value-level precision and
+recall against known answers.
+
+```bash
+python benchmarks/run_benchmark.py --n 60 --seed 7
+```
+
+| Queries | Docs | Precision | Recall |
+| --- | ---: | ---: | ---: |
+| name only (`"Net profit"`) | 60 | 81.8% | 35.0% |
+| with aliases (`"Net profit"` + the wordings you expect) | 60 | 100.0% | 100.0% |
+
+How to read it:
+
+- **Synthetic, so optimistic.** It tests controlled layout, wording and typo variation. It is *not* a
+  claim about accuracy on arbitrary real-world PDFs.
+- **Aliases matter.** Matching is lexical, so "Net profit" cannot find "Profit for the year" on its own.
+  Name-only recall is low for exactly that reason; listing the wordings fixes it.
+- **Short generic names are risky.** Most name-only false positives come from the one-word query "Tax"
+  matching "Tax paid" or "Profit before tax". Use longer names, aliases or `mode: exact` for those.
+- A smaller version of this benchmark runs in the test suite as a regression guard.
+
 ## How it works
 
 ```
@@ -136,7 +174,8 @@ PDF --pdfplumber--> tables (ruled -> text fallback) --> header + unit detection
 ```
 
 Source layout: `reader.py` (tables), `matcher.py` (scoring), `normalize.py` (numbers, units),
-`extractor.py` (engine), `config.py` (attribute files), `output.py`, `cli.py`.
+`extractor.py` (engine), `config.py` (attribute files), `output.py`, `cli.py`; `app/` holds the
+Streamlit demo and `benchmarks/` the benchmark.
 
 ## Limitations
 
@@ -150,13 +189,15 @@ Source layout: `reader.py` (tables), `matcher.py` (scoring), `normalize.py` (num
 - [ ] Optional embedding / LLM matcher for synonyms with confidence scores
 - [ ] OCR for scanned pages
 - [ ] Column detection from word positions for borderless tables
-- [ ] Web demo (Streamlit / Hugging Face Space)
-- [ ] Labeled benchmark of public filings with precision / recall
+- [x] Web demo (Streamlit)
+- [x] Synthetic benchmark
+- [ ] Benchmark on labeled real public filings (SEC / Companies House)
+- [ ] Hosted public demo link
 
 ## Development
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,excel]"
 python examples/make_sample_pdfs.py   # regenerate the fictional sample PDFs
 pytest
 ruff check .

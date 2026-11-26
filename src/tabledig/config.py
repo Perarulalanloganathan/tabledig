@@ -6,7 +6,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Union
+from typing import Any, Iterable, Optional, Union
 
 from .models import Attribute
 
@@ -47,6 +47,26 @@ def _one(item: Any) -> Attribute:
             min_score=float(min_score) if min_score not in (None, "") else None,
         )
     raise TypeError(f"cannot build an attribute from {type(item).__name__}")
+
+
+def parse_attribute_line(line: str) -> Optional[Attribute]:
+    """Parse ``"Net profit = Profit for the year | PAT"`` (aliases after ``=``).
+
+    Blank lines and ``#`` comments return ``None``.
+    """
+    text = line.strip()
+    if not text or text.startswith("#"):
+        return None
+    name, _, rest = text.partition("=")
+    if not name.strip():
+        return None
+    return Attribute(name=name.strip(), aliases=_split_aliases(rest))
+
+
+def parse_attribute_lines(text: str) -> list[Attribute]:
+    """Parse several lines with :func:`parse_attribute_line`."""
+    parsed = (parse_attribute_line(line) for line in text.splitlines())
+    return [a for a in parsed if a is not None]
 
 
 def coerce_attributes(items: Iterable[Any]) -> list[Attribute]:

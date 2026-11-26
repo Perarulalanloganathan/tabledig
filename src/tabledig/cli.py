@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from . import __version__
-from .config import coerce_attributes, load_config
+from .config import coerce_attributes, load_config, parse_attribute_lines
 from .extractor import Extractor
 from .output import write_records
 from .reader import read_tables
@@ -39,7 +39,12 @@ def _build_parser() -> argparse.ArgumentParser:
     ex = sub.add_parser("extract", help="extract attribute values from PDFs")
     ex.add_argument("paths", nargs="+", help="PDF files and/or folders")
     ex.add_argument("-a", "--attrs", help="attribute file (.yaml, .json or .csv)")
-    ex.add_argument("--attr", action="append", default=[], help="attribute name (repeatable)")
+    ex.add_argument(
+        "--attr",
+        action="append",
+        default=[],
+        help='attribute, optionally with aliases: "Net profit=PAT|Profit after tax" (repeatable)',
+    )
     ex.add_argument("-o", "--output", help="output file (.csv, .json, .xlsx); default: CSV to stdout")
     ex.add_argument("--format", choices=["csv", "json", "xlsx"], help="override format from extension")
     ex.add_argument("--wide", action="store_true", help="one row per attribute, one column per table column")
@@ -64,7 +69,7 @@ def _cmd_extract(args: argparse.Namespace) -> int:
         attributes.extend(config.attributes)
         settings = config.settings
     if args.attr:
-        attributes.extend(coerce_attributes(args.attr))
+        attributes.extend(coerce_attributes(parse_attribute_lines("\n".join(args.attr))))
     if not attributes:
         print("error: give attributes with --attrs FILE and/or --attr NAME", file=sys.stderr)
         return 2
