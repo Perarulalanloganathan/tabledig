@@ -12,6 +12,10 @@ price lists, lab results...) and looks up **named attributes** - row labels such
 *"Total revenue"* or *"Subtotal"* - returning every value on that row, with the column it
 came from, the page, and how confident the match was.
 
+![tabledig demo: pick a PDF, list attributes, get values](docs/demo.gif)
+
+*The [live demo](https://tabledig.streamlit.app) in action.*
+
 ```text
 $ tabledig extract examples/sample_income_statement.pdf \
       --attr "Revenue from operations" --attr "Net profit" --attr "Dividend paid" --wide

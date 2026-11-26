@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+- Demo: result columns reordered so values appear first; README now has a demo GIF
+  (`scripts/make_demo_gif.py` regenerates it from the real app).
+
 ## 0.2.0
 - Streamlit demo app (`app/streamlit_app.py`): upload or pick a sample PDF, list attributes, see results,
   detected tables and JSON, download CSV.

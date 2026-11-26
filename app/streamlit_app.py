@@ -144,6 +144,13 @@ with tab_results:
     if wide:
         fieldnames, rows = records_to_wide(records)
         frame = pd.DataFrame(rows, columns=fieldnames)
+        # values first, bookkeeping last, so the numbers are visible without scrolling
+        meta = {"file", "attribute", "matched_label", "page", "unit", "score", "status", "note"}
+        values = [c for c in frame.columns if c not in meta]
+        order = ["attribute", "matched_label", *values, "page", "unit", "score", "status"]
+        if frame["file"].nunique() > 1:
+            order.insert(0, "file")
+        frame = frame[[c for c in order if c in frame.columns]]
     else:
         frame = pd.DataFrame([r.as_dict() for r in records])
     st.dataframe(frame, use_container_width=True, hide_index=True)
