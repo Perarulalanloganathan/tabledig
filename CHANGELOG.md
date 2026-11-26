@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.1
 
 - OCR: `--ocr force` re-reads pages that already have a text layer (e.g. scanner output).
 - OCR: a second Tesseract layout pass recovers lines the first pass loses (large-print totals).
